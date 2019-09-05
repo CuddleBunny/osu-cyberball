@@ -114,7 +114,7 @@ define('pages/game',["require", "exports", "phaser"], function (require, exports
     Object.defineProperty(exports, "__esModule", { value: true });
     phaser_1 = __importDefault(phaser_1);
     function preload() {
-        this.load.setBaseURL('http://labs.phaser.io');
+        this.load.setBaseURL('https://labs.phaser.io');
         this.load.image('sky', 'assets/skies/space3.png');
         this.load.image('logo', 'assets/sprites/phaser3-logo.png');
         this.load.image('red', 'assets/particles/red.png');
