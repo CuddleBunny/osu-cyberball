@@ -1,0 +1,50 @@
+{
+  "name": "cyberball-osu",
+  "version": "2.0.0",
+  "description": "A clone of Empirisoft's Cyberball: Cyberball is a virtual ball-toss game that can be used for research on ostracism, social exclusion, or rejection. It has also been used to study discrimination and prejudice (in these instances, Cyberball ball toss choices are used as Dependent Variable).",
+  "license": "MIT",
+  "dependencies": {
+    "aurelia-animator-css": "^1.0.4",
+    "aurelia-bootstrapper": "^2.3.2",
+    "phaser": "^3.19.0"
+  },
+  "devDependencies": {
+    "@types/jasmine": "^2.8.9",
+    "@types/node": "^10.11.6",
+    "aurelia-cli": "^1.0.2",
+    "aurelia-testing": "^1.0.0",
+    "aurelia-tools": "^2.0.0",
+    "browser-sync": "^2.26.3",
+    "connect-history-api-fallback": "^1.6.0",
+    "debounce": "^1.2.0",
+    "gulp": "^4.0.0",
+    "gulp-notify": "^3.2.0",
+    "gulp-plumber": "^1.2.1",
+    "gulp-rename": "^1.4.0",
+    "gulp-tslint": "^8.1.4",
+    "gulp-typescript": "^5.0.0",
+    "gulp-watch": "^5.0.1",
+    "jasmine-core": "^3.2.1",
+    "karma": "^4.1.0",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-jasmine": "^2.0.1",
+    "karma-sourcemap-loader": "^0.3.7",
+    "karma-typescript-preprocessor": "^0.4.0",
+    "minimatch": "^3.0.4",
+    "promise-polyfill": "^8.1.0",
+    "requirejs": "^2.3.6",
+    "text": "requirejs/text#latest",
+    "through2": "^3.0.0",
+    "tslint": "^5.13.0",
+    "typescript": "^3.1.2",
+    "vinyl-fs": "^3.0.3"
+  },
+  "scripts": {
+    "build": "au build",
+    "start": "au run",
+    "test": "au test"
+  },
+  "engines": {
+    "node": ">=8.9.0"
+  }
+}
