@@ -7,8 +7,6 @@ define('app',["require", "exports"], function (require, exports) {
         App.prototype.configureRouter = function (config, router) {
             this.router = router;
             config.title = 'Cyberball';
-            config.options.pushState = true;
-            config.options.root = '/osu-cyberball';
             config.map([
                 { route: ['', 'home'], name: 'home', moduleId: 'pages/home' },
                 { route: 'game', name: 'game', moduleId: 'pages/game' }

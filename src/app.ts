@@ -7,8 +7,6 @@ export class App {
         this.router = router;
 
         config.title = 'Cyberball';
-        config.options.pushState = true;
-        config.options.root = '/osu-cyberball';
 
         config.map([
             { route: ['', 'home'], name: 'home', moduleId: 'pages/home' },
