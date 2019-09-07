@@ -122,6 +122,7 @@ define('pages/game',["require", "exports", "phaser"], function (require, exports
     function create() {
         this.add.image(400, 300, 'sky');
         this.add.image(400, 100, 'logo');
+        setTimeout(function () { window.dispatchEvent(new CustomEvent('complete', { detail: { test: 'test' } })); }, 1000);
     }
     var GameViewModel = (function () {
         function GameViewModel() {
@@ -205,6 +206,5 @@ define('resources/phaser-game/phaser-game',["require", "exports", "aurelia-frame
     exports.PhaserGameCustomElement = PhaserGameCustomElement;
 });
 ;
-define('text!resources/phaser-game/phaser-game.html',[],function(){return "<template>\n    <div></div>\n</template>\n";});;
 define('resources',['resources/index'],function(m){return m;});
 //# sourceMappingURL=app-bundle.js.map
