@@ -11,6 +11,8 @@ function preload() {
 function create() {
     this.add.image(400, 300, 'sky');
     this.add.image(400, 100, 'logo');
+
+    setTimeout(() => { window.dispatchEvent(new CustomEvent('complete', { detail: { test: 'test' } }))}, 1000)
 }
 
 export class GameViewModel {
