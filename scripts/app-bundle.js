@@ -113,26 +113,109 @@ define('pages/game',["require", "exports", "phaser"], function (require, exports
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     phaser_1 = __importDefault(phaser_1);
+    var gameWidth = 800;
+    var gameHeight = 440;
+    var playerGroup;
+    var playerSprite;
+    var ballSprite;
+    var throwTarget;
+    var playerHasBall = true;
+    var ballHeld = true;
+    var playerPosition = new phaser_1.default.Geom.Point(400, 250);
+    var cpuPositions = [
+        new phaser_1.default.Geom.Point(150, 100),
+        new phaser_1.default.Geom.Point(650, 100)
+    ];
+    var config = {
+        cpuCount: 2
+    };
+    function getCaughtBallPosition(player) {
+        return { x: player.x + 50 * player.scaleX, y: player.y - 15 };
+    }
+    function getActiveBallPosition(player) {
+        return { x: player.x - 40 * player.scaleX, y: player.y - 25 };
+    }
     function preload() {
-        this.load.setBaseURL('https://labs.phaser.io');
-        this.load.image('sky', 'assets/skies/space3.png');
-        this.load.image('logo', 'assets/sprites/phaser3-logo.png');
-        this.load.image('red', 'assets/particles/red.png');
+        this.load.image('ball', './assets/ball.png');
+        this.load.multiatlas('player', './assets/player.json', 'assets');
     }
     function create() {
-        this.add.image(400, 300, 'sky');
-        this.add.image(400, 100, 'logo');
-        setTimeout(function () { window.dispatchEvent(new CustomEvent('complete', { detail: { test: 'test' } })); }, 1000);
+        var _this = this;
+        this.cameras.main.setBackgroundColor('#ffffff');
+        this.anims.create({
+            key: 'active',
+            frames: this.anims.generateFrameNames('player', { start: 1, end: 1, prefix: 'active/', suffix: '.png' })
+        });
+        this.anims.create({
+            key: 'idle',
+            frames: this.anims.generateFrameNames('player', { start: 1, end: 1, prefix: 'idle/', suffix: '.png' })
+        });
+        this.anims.create({
+            key: 'throw',
+            frames: this.anims.generateFrameNames('player', { start: 1, end: 3, prefix: 'throw/', suffix: '.png' })
+        });
+        this.anims.create({
+            key: 'catch',
+            frames: this.anims.generateFrameNames('player', { start: 1, end: 1, prefix: 'catch/', suffix: '.png' }),
+            frameRate: 4
+        });
+        playerGroup = this.physics.add.group({ immovable: true });
+        playerSprite = playerGroup.create(playerPosition.x, playerPosition.y, 'player', 'active/1.png');
+        var _loop_1 = function (i) {
+            var cpuSprite = playerGroup.create(cpuPositions[i].x, cpuPositions[i].y, 'player', 'idle/1.png');
+            cpuSprite.scaleX = cpuPositions[i].x > playerPosition.x ? -1 : 1;
+            cpuSprite.setInteractive();
+            cpuSprite.on('pointerdown', function (e) {
+                if (playerHasBall) {
+                    playerHasBall = ballHeld = false;
+                    throwTarget = cpuSprite;
+                    playerSprite.play('throw');
+                    playerSprite.anims.currentAnim.once('complete', function () { playerSprite.play('idle'); });
+                    var ballTargetPosition = getCaughtBallPosition(cpuSprite);
+                    _this.physics.moveTo(ballSprite, ballTargetPosition.x, ballTargetPosition.y, 500);
+                }
+            });
+        };
+        for (var i = 0; i < config.cpuCount; i++) {
+            _loop_1(i);
+        }
+        var ballPosition = getActiveBallPosition(playerSprite);
+        ballSprite = this.physics.add.image(ballPosition.x, ballPosition.y, 'ball');
+        console.log(playerGroup);
+        this.physics.add.overlap(ballSprite, playerGroup, function (ball, player) {
+            if (!ballHeld && player === throwTarget) {
+                ballHeld = true;
+                if (player === playerSprite) {
+                    playerHasBall = true;
+                }
+                player.play('catch');
+                var ballPosition_1 = getCaughtBallPosition(player);
+                ball.body.reset(ballPosition_1.x, ballPosition_1.y);
+                var ballTargetPosition = getCaughtBallPosition(playerSprite);
+                throwTarget = playerSprite;
+                _this.physics.moveTo(ballSprite, ballTargetPosition.x, ballTargetPosition.y, 500);
+            }
+        });
+    }
+    function update() {
+        if (playerHasBall) {
+            playerSprite.scaleX = this.input.x > gameWidth / 2 ? 1 : -1;
+            ballSprite.x = getActiveBallPosition(playerSprite).x;
+        }
     }
     var GameViewModel = (function () {
         function GameViewModel() {
             this.gameConfig = {
                 type: phaser_1.default.AUTO,
-                width: 800,
-                height: 600,
+                width: gameWidth,
+                height: gameHeight,
                 scene: {
                     preload: preload,
-                    create: create
+                    create: create,
+                    update: update
+                },
+                physics: {
+                    default: 'arcade'
                 }
             };
         }
