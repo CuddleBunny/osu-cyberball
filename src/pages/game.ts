@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { getCaughtBallPosition, getActiveBallPosition } from 'helpers';
 
 const gameWidth = 800;
 const gameHeight = 440;
@@ -25,18 +26,6 @@ const cpuPositions = [
 const config = {
     cpuCount: 2
 };
-
-// Helpers
-
-// TODO: Break helpers into a separate file?
-
-function getCaughtBallPosition(player: Phaser.GameObjects.Sprite) {
-    return { x: player.x + 50 * player.scaleX, y: player.y - 15 };
-}
-
-function getActiveBallPosition(player: Phaser.GameObjects.Sprite) {
-    return { x: player.x - 40 * player.scaleX, y: player.y - 25 };
-}
 
 function preload(this: Phaser.Scene) {
     // TODO: Load from settings.
@@ -78,7 +67,7 @@ function create(this: Phaser.Scene) {
     for(let i = 0; i < config.cpuCount; i++) {
         let cpuSprite = playerGroup.create(cpuPositions[i].x, cpuPositions[i].y, 'player', 'idle/1.png');
 
-        cpuSprite.scaleX = cpuPositions[i].x > playerPosition.x ? -1 : 1;
+        cpuSprite.flipX = cpuPositions[i].x > playerPosition.x;
 
         cpuSprite.setInteractive();
         cpuSprite.on('pointerdown', (e) => {
@@ -114,10 +103,6 @@ function create(this: Phaser.Scene) {
 
             let ballPosition = getCaughtBallPosition(player);
             (ball.body as Phaser.Physics.Arcade.Body).reset(ballPosition.x, ballPosition.y);
-
-            let ballTargetPosition = getCaughtBallPosition(playerSprite);
-            throwTarget = playerSprite;
-            this.physics.moveTo(ballSprite, ballTargetPosition.x, ballTargetPosition.y, 500);
         }
     });
 
@@ -130,9 +115,12 @@ function update(this: Phaser.Scene) {
         // If the player has the ball:
         //  - Player character looks in the direction of the mouse
         //  - Player can click a CPU to throw the ball.
+        playerSprite.play('active');
+        playerSprite.flipX = this.input.x < gameWidth / 2;
 
-        playerSprite.scaleX = this.input.x > gameWidth / 2 ? 1 : -1;
-        ballSprite.x = getActiveBallPosition(playerSprite).x;
+        let ballPosition = getActiveBallPosition(playerSprite);
+        ballSprite.x = ballPosition.x;
+        ballSprite.y = ballPosition.y;
     }
 }
 
@@ -147,7 +135,10 @@ export class GameViewModel {
             update: update
         },
         physics: {
-            default: 'arcade'
+            default: 'arcade',
+            arcade: {
+                debug: true
+            }
         }
     }
 }
