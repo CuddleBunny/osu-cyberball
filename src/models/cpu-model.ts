@@ -2,19 +2,26 @@ import { BanterModel } from './banter-model';
 import { PlayerModel } from './player-model';
 
 export class CPUModel extends PlayerModel {
-    targetPreference: Array<number>;
+    // A set of weights for each possible target, adding up to 100%.
+    targetPreference: Array<number> = [50, 50];
 
-    throwDelay: number;
-    throwDelayVariance: number;
+    throwDelay: number = 500;
+    throwDelayVariance: number = 200;
 
-    catchDelay: number;
-    catchDelayVariance: number;
+    catchDelay: number = 500;
+    catchDelayVariance: number = 200;
 
-    introductionBanter: BanterModel;
-    throwBanter: BanterModel
-    catchBanter: BanterModel
-    leftOutBanter: BanterModel
+    introductionBanter?: BanterModel;
+    throwBanter?: BanterModel
+    catchBanter?: BanterModel
+    leftOutBanter?: BanterModel
 
-    boredomBanterThreshold: number;
-    boredomBanter: BanterModel;
+    boredomBanterThreshold?: number;
+    boredomBanter?: BanterModel;
+
+    constructor(init?: Partial<CPUModel>) {
+        super();
+
+        Object.assign(this, init);
+    }
 }

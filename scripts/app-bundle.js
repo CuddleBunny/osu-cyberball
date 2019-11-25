@@ -89,8 +89,15 @@ define('models/cpu-model',["require", "exports", "./player-model"], function (re
     Object.defineProperty(exports, "__esModule", { value: true });
     var CPUModel = (function (_super) {
         __extends(CPUModel, _super);
-        function CPUModel() {
-            return _super !== null && _super.apply(this, arguments) || this;
+        function CPUModel(init) {
+            var _this = _super.call(this) || this;
+            _this.targetPreference = [50, 50];
+            _this.throwDelay = 500;
+            _this.throwDelayVariance = 200;
+            _this.catchDelay = 500;
+            _this.catchDelayVariance = 200;
+            Object.assign(_this, init);
+            return _this;
         }
         return CPUModel;
     }(player_model_1.PlayerModel));
@@ -108,119 +115,52 @@ define('models/player-model',["require", "exports"], function (require, exports)
     exports.PlayerModel = PlayerModel;
 });
 ;
-define('models/settings-model',["require", "exports"], function (require, exports) {
+define('models/settings-model',["require", "exports", "./cpu-model"], function (require, exports, cpu_model_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var SettingsModel = (function () {
-        function SettingsModel() {
+        function SettingsModel(init) {
+            this.throwCount = 10;
+            this.ballSpeed = 500;
+            this.baseUrl = './assets';
+            this.ballSprite = 'ball.png';
+            this.chatEnabled = false;
+            Object.assign(this, init);
         }
         return SettingsModel;
     }());
     exports.SettingsModel = SettingsModel;
+    exports.defaultSettings = new SettingsModel({
+        player: {
+            name: 'Player 1'
+        },
+        computerPlayers: [
+            new cpu_model_1.CPUModel({
+                name: 'Player 2'
+            }),
+            new cpu_model_1.CPUModel({
+                name: 'Player 3'
+            })
+        ]
+    });
 });
 ;
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-define('pages/game',["require", "exports", "phaser", "helpers"], function (require, exports, phaser_1, helpers_1) {
+define('pages/game',["require", "exports", "./../scenes/cyberball", "./../models/settings-model", "phaser"], function (require, exports, cyberball_1, settings_model_1, phaser_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     phaser_1 = __importDefault(phaser_1);
     var gameWidth = 800;
     var gameHeight = 440;
-    var playerGroup;
-    var playerSprite;
-    var ballSprite;
-    var throwTarget;
-    var playerHasBall = true;
-    var ballHeld = true;
-    var playerPosition = new phaser_1.default.Geom.Point(400, 250);
-    var cpuPositions = [
-        new phaser_1.default.Geom.Point(150, 100),
-        new phaser_1.default.Geom.Point(650, 100)
-    ];
-    var config = {
-        cpuCount: 2
-    };
-    function preload() {
-        this.load.image('ball', './assets/ball.png');
-        this.load.multiatlas('player', './assets/player.json', 'assets');
-    }
-    function create() {
-        var _this = this;
-        this.cameras.main.setBackgroundColor('#ffffff');
-        this.anims.create({
-            key: 'active',
-            frames: this.anims.generateFrameNames('player', { start: 1, end: 1, prefix: 'active/', suffix: '.png' })
-        });
-        this.anims.create({
-            key: 'idle',
-            frames: this.anims.generateFrameNames('player', { start: 1, end: 1, prefix: 'idle/', suffix: '.png' })
-        });
-        this.anims.create({
-            key: 'throw',
-            frames: this.anims.generateFrameNames('player', { start: 1, end: 3, prefix: 'throw/', suffix: '.png' })
-        });
-        this.anims.create({
-            key: 'catch',
-            frames: this.anims.generateFrameNames('player', { start: 1, end: 1, prefix: 'catch/', suffix: '.png' }),
-            frameRate: 4
-        });
-        playerGroup = this.physics.add.group({ immovable: true });
-        playerSprite = playerGroup.create(playerPosition.x, playerPosition.y, 'player', 'active/1.png');
-        var _loop_1 = function (i) {
-            var cpuSprite = playerGroup.create(cpuPositions[i].x, cpuPositions[i].y, 'player', 'idle/1.png');
-            cpuSprite.flipX = cpuPositions[i].x > playerPosition.x;
-            cpuSprite.setInteractive();
-            cpuSprite.on('pointerdown', function (e) {
-                if (playerHasBall) {
-                    playerHasBall = ballHeld = false;
-                    throwTarget = cpuSprite;
-                    playerSprite.play('throw');
-                    playerSprite.anims.currentAnim.once('complete', function () { playerSprite.play('idle'); });
-                    var ballTargetPosition = helpers_1.getCaughtBallPosition(cpuSprite);
-                    _this.physics.moveTo(ballSprite, ballTargetPosition.x, ballTargetPosition.y, 500);
-                }
-            });
-        };
-        for (var i = 0; i < config.cpuCount; i++) {
-            _loop_1(i);
-        }
-        var ballPosition = helpers_1.getActiveBallPosition(playerSprite);
-        ballSprite = this.physics.add.image(ballPosition.x, ballPosition.y, 'ball');
-        console.log(playerGroup);
-        this.physics.add.overlap(ballSprite, playerGroup, function (ball, player) {
-            if (!ballHeld && player === throwTarget) {
-                ballHeld = true;
-                if (player === playerSprite) {
-                    playerHasBall = true;
-                }
-                player.play('catch');
-                var ballPosition_1 = helpers_1.getCaughtBallPosition(player);
-                ball.body.reset(ballPosition_1.x, ballPosition_1.y);
-            }
-        });
-    }
-    function update() {
-        if (playerHasBall) {
-            playerSprite.play('active');
-            playerSprite.flipX = this.input.x < gameWidth / 2;
-            var ballPosition = helpers_1.getActiveBallPosition(playerSprite);
-            ballSprite.x = ballPosition.x;
-            ballSprite.y = ballPosition.y;
-        }
-    }
     var GameViewModel = (function () {
         function GameViewModel() {
             this.gameConfig = {
                 type: phaser_1.default.AUTO,
                 width: gameWidth,
                 height: gameHeight,
-                scene: {
-                    preload: preload,
-                    create: create,
-                    update: update
-                },
+                scene: new cyberball_1.CyberballScene(settings_model_1.defaultSettings),
                 physics: {
                     default: 'arcade',
                     arcade: {
@@ -297,6 +237,149 @@ define('resources/phaser-game/phaser-game',["require", "exports", "aurelia-frame
         return PhaserGameCustomElement;
     }());
     exports.PhaserGameCustomElement = PhaserGameCustomElement;
+});
+;
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+define('scenes/cyberball',["require", "exports", "phaser"], function (require, exports, phaser_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    phaser_1 = __importDefault(phaser_1);
+    var playerPosition = new phaser_1.default.Geom.Point(400, 250);
+    var cpuPositions = [
+        new phaser_1.default.Geom.Point(150, 100),
+        new phaser_1.default.Geom.Point(650, 100)
+    ];
+    var CyberballScene = (function (_super) {
+        __extends(CyberballScene, _super);
+        function CyberballScene(settings) {
+            var _this = _super.call(this, {}) || this;
+            _this.playerHasBall = true;
+            _this.ballHeld = true;
+            _this.settings = settings;
+            return _this;
+        }
+        CyberballScene.prototype.preload = function () {
+            this.load.image('ball', this.settings.baseUrl + "/" + this.settings.ballSprite);
+            this.load.multiatlas('player', "./assets/player.json", 'assets');
+        };
+        CyberballScene.prototype.create = function () {
+            var _this = this;
+            this.cameras.main.setBackgroundColor('#ffffff');
+            this.anims.create({
+                key: 'active',
+                frames: this.anims.generateFrameNames('player', { start: 1, end: 1, prefix: 'active/', suffix: '.png' })
+            });
+            this.anims.create({
+                key: 'idle',
+                frames: this.anims.generateFrameNames('player', { start: 1, end: 1, prefix: 'idle/', suffix: '.png' })
+            });
+            this.anims.create({
+                key: 'throw',
+                frameRate: 12,
+                frames: this.anims.generateFrameNames('player', { start: 1, end: 3, prefix: 'throw/', suffix: '.png' })
+            });
+            this.anims.create({
+                key: 'catch',
+                frames: this.anims.generateFrameNames('player', { start: 1, end: 1, prefix: 'catch/', suffix: '.png' })
+            });
+            this.playerGroup = this.physics.add.group({ immovable: true, allowGravity: false });
+            this.playerSprite = this.playerGroup.create(playerPosition.x, playerPosition.y, 'player', 'active/1.png');
+            var _loop_1 = function (i) {
+                var cpuSprite = this_1.playerGroup.create(cpuPositions[i].x, cpuPositions[i].y, 'player', 'idle/1.png');
+                cpuSprite.flipX = cpuPositions[i].x > playerPosition.x;
+                cpuSprite.setData('settings', this_1.settings.computerPlayers[i]);
+                cpuSprite.setInteractive();
+                cpuSprite.on('pointerdown', function (e) {
+                    if (_this.playerHasBall)
+                        _this.throwBall(_this.playerSprite, cpuSprite);
+                });
+            };
+            var this_1 = this;
+            for (var i = 0; i < this.settings.computerPlayers.length; i++) {
+                _loop_1(i);
+            }
+            var ballPosition = this.getActiveBallPosition(this.playerSprite);
+            this.ballSprite = this.physics.add.sprite(ballPosition.x, ballPosition.y, 'ball');
+            this.physics.add.overlap(this.ballSprite, this.playerGroup, function (_b, receiver) {
+                if (!_this.ballHeld && receiver === _this.throwTarget)
+                    _this.catchBall(receiver);
+            });
+        };
+        CyberballScene.prototype.update = function () {
+            if (this.playerHasBall) {
+                this.playerSprite.play('active');
+                this.playerSprite.flipX = this.input.x < this.playerSprite.x;
+                var ballPosition = this.getActiveBallPosition(this.playerSprite);
+                this.ballSprite.x = ballPosition.x;
+                this.ballSprite.y = ballPosition.y;
+            }
+        };
+        CyberballScene.prototype.throwBall = function (thrower, receiver) {
+            this.playerHasBall = this.ballHeld = false;
+            this.throwTarget = receiver;
+            thrower.play('throw');
+            thrower.anims.currentAnim.once('complete', function () { return thrower.play('idle'); });
+            var ballTargetPosition = this.getCaughtBallPosition(receiver);
+            this.physics.moveTo(this.ballSprite, ballTargetPosition.x, ballTargetPosition.y, 500);
+        };
+        CyberballScene.prototype.catchBall = function (receiver) {
+            var _this = this;
+            this.ballHeld = true;
+            receiver.play('catch');
+            var ballPosition = this.getCaughtBallPosition(receiver);
+            this.ballSprite.body.reset(ballPosition.x, ballPosition.y);
+            if (receiver === this.playerSprite) {
+                this.playerHasBall = true;
+            }
+            else {
+                var settings_1 = receiver.getData('settings');
+                setTimeout(function () {
+                    receiver.play('active');
+                    ballPosition = _this.getActiveBallPosition(receiver);
+                    _this.ballSprite.x = ballPosition.x;
+                    _this.ballSprite.y = ballPosition.y;
+                    setTimeout(function () {
+                        var random = Math.random() * 100;
+                        for (var i = 0; i < settings_1.targetPreference.length; i++) {
+                            random -= settings_1.targetPreference[i];
+                            if (random <= 0) {
+                                if (i >= _this.playerGroup.getChildren().indexOf(receiver))
+                                    i++;
+                                _this.throwBall(receiver, _this.playerGroup.getChildren()[i]);
+                                break;
+                            }
+                        }
+                    }, _this.calculateTimeout(settings_1.throwDelay, settings_1.throwDelayVariance));
+                }, this.calculateTimeout(settings_1.catchDelay, settings_1.catchDelayVariance));
+            }
+        };
+        CyberballScene.prototype.getCaughtBallPosition = function (target) {
+            return new phaser_1.default.Geom.Point(target.x + (target.flipX ? -50 : 50), target.y - 15);
+        };
+        CyberballScene.prototype.getActiveBallPosition = function (target) {
+            return new phaser_1.default.Geom.Point(target.x + (target.flipX ? 40 : -40), target.y - 20);
+        };
+        CyberballScene.prototype.calculateTimeout = function (delay, variance) {
+            return delay + Math.random() * variance;
+        };
+        return CyberballScene;
+    }(phaser_1.default.Scene));
+    exports.CyberballScene = CyberballScene;
 });
 ;
 define('resources',['resources/index'],function(m){return m;});
