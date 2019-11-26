@@ -122,6 +122,11 @@ define('models/settings-model',["require", "exports", "./cpu-model"], function (
         function SettingsModel(init) {
             this.throwCount = 10;
             this.ballSpeed = 500;
+            this.useSchedule = false;
+            this.scheduleHonorsThrowCount = false;
+            this.schedule = [
+                1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0
+            ];
             this.baseUrl = './assets';
             this.ballSprite = 'ball.png';
             this.chatEnabled = false;
@@ -140,6 +145,12 @@ define('models/settings-model',["require", "exports", "./cpu-model"], function (
             }),
             new cpu_model_1.CPUModel({
                 name: 'Player 3'
+            }),
+            new cpu_model_1.CPUModel({
+                name: 'Player 4'
+            }),
+            new cpu_model_1.CPUModel({
+                name: 'Player 5'
             })
         ]
     });
@@ -152,14 +163,16 @@ define('pages/game',["require", "exports", "./../scenes/cyberball", "./../models
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     phaser_1 = __importDefault(phaser_1);
-    var gameWidth = 800;
-    var gameHeight = 440;
     var GameViewModel = (function () {
         function GameViewModel() {
+            this.settings = settings_model_1.defaultSettings;
+            this.chatMessages = [];
+            this.gameWidth = 800;
+            this.gameHeight = 460;
             this.gameConfig = {
                 type: phaser_1.default.AUTO,
-                width: gameWidth,
-                height: gameHeight,
+                width: this.gameWidth,
+                height: this.gameHeight,
                 scene: new cyberball_1.CyberballScene(settings_model_1.defaultSettings),
                 physics: {
                     default: 'arcade',
@@ -169,12 +182,20 @@ define('pages/game',["require", "exports", "./../scenes/cyberball", "./../models
                 }
             };
         }
+        GameViewModel.prototype.sendMessage = function () {
+            this.chatMessages.push({
+                sender: this.settings.player.name,
+                text: this.chatMessage
+            });
+            this.chatMessage = '';
+        };
         return GameViewModel;
     }());
     exports.GameViewModel = GameViewModel;
 });
 ;
-define('text!pages/game.html',[],function(){return "<template>\n    <h1>Cyberball</h1>\n\n    <phaser-game config.bind=\"gameConfig\"></phaser-game>\n</template>\n";});;
+define('text!pages/game.css',[],function(){return ".chat {\n\n}\n\n.chat-log {\n    border: 1px solid black;\n    border-bottom: 0;\n    height: 100px;\n    overflow-y: auto;\n}\n\n.chat-input {\n    display: flex;\n}\n\n.chat-input input {\n    flex: 1;\n}\n";});;
+define('text!pages/game.html',[],function(){return "<template>\n    <require from=\"./game.css\"></require>\n\n    <h1>Cyberball</h1>\n\n    <phaser-game config.bind=\"gameConfig\"></phaser-game>\n\n    <div  if.bind=\"settings.chatEnabled\" class=\"chat\" css=\"width: ${gameWidth}px\">\n        <div class=\"chat-log\">\n            <div repeat.for=\"message of chatMessages\">\n                <strong>${message.sender}</strong>: <span>${message.text}</span>\n            </div>\n        </div>\n\n        <form class=\"chat-input\" submit.delegate=\"sendMessage()\">\n            <input value.bind=\"chatMessage\" />\n            <button type=\"submit\">Send</button>\n        </form>\n    </div>\n</template>\n";});;
 define('pages/home',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -259,17 +280,14 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     phaser_1 = __importDefault(phaser_1);
-    var playerPosition = new phaser_1.default.Geom.Point(400, 250);
-    var cpuPositions = [
-        new phaser_1.default.Geom.Point(150, 100),
-        new phaser_1.default.Geom.Point(650, 100)
-    ];
+    var textStyle = { fontFamily: 'Arial', color: '#000000' };
     var CyberballScene = (function (_super) {
         __extends(CyberballScene, _super);
         function CyberballScene(settings) {
             var _this = _super.call(this, {}) || this;
             _this.playerHasBall = true;
             _this.ballHeld = true;
+            _this.throwCount = 0;
             _this.settings = settings;
             return _this;
         }
@@ -297,11 +315,16 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
                 key: 'catch',
                 frames: this.anims.generateFrameNames('player', { start: 1, end: 1, prefix: 'catch/', suffix: '.png' })
             });
+            var playerPosition = this.getPlayerPosition();
             this.playerGroup = this.physics.add.group({ immovable: true, allowGravity: false });
             this.playerSprite = this.playerGroup.create(playerPosition.x, playerPosition.y, 'player', 'active/1.png');
+            this.add.text(playerPosition.x, playerPosition.y + this.playerSprite.height / 2 + 10, this.settings.player.name, textStyle).setOrigin(0.5);
+            console.log(this.playerSprite);
             var _loop_1 = function (i) {
-                var cpuSprite = this_1.playerGroup.create(cpuPositions[i].x, cpuPositions[i].y, 'player', 'idle/1.png');
-                cpuSprite.flipX = cpuPositions[i].x > playerPosition.x;
+                var cpuPosition = this_1.getCPUPosition(i);
+                var cpuSprite = this_1.playerGroup.create(cpuPosition.x, cpuPosition.y, 'player', 'idle/1.png');
+                this_1.add.text(cpuPosition.x, cpuPosition.y + cpuSprite.height / 2 + 10, this_1.settings.computerPlayers[i].name, textStyle).setOrigin(0.5);
+                cpuSprite.flipX = cpuPosition.x > playerPosition.x;
                 cpuSprite.setData('settings', this_1.settings.computerPlayers[i]);
                 cpuSprite.setInteractive();
                 cpuSprite.on('pointerdown', function (e) {
@@ -321,6 +344,7 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
             });
         };
         CyberballScene.prototype.update = function () {
+            var _this = this;
             if (this.playerHasBall) {
                 this.playerSprite.play('active');
                 this.playerSprite.flipX = this.input.x < this.playerSprite.x;
@@ -328,10 +352,18 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
                 this.ballSprite.x = ballPosition.x;
                 this.ballSprite.y = ballPosition.y;
             }
+            else if (!this.ballHeld) {
+                this.playerGroup.getChildren().forEach(function (c) {
+                    var sprite = c;
+                    if (sprite.frame.name.includes('idle'))
+                        sprite.flipX = _this.ballSprite.x < sprite.x;
+                });
+            }
         };
         CyberballScene.prototype.throwBall = function (thrower, receiver) {
             this.playerHasBall = this.ballHeld = false;
             this.throwTarget = receiver;
+            this.throwCount++;
             thrower.play('throw');
             thrower.anims.currentAnim.once('complete', function () { return thrower.play('idle'); });
             var ballTargetPosition = this.getCaughtBallPosition(receiver);
@@ -340,6 +372,9 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
         CyberballScene.prototype.catchBall = function (receiver) {
             var _this = this;
             this.ballHeld = true;
+            this.throwCount++;
+            if (this.throwCount >= this.settings.throwCount) {
+            }
             receiver.play('catch');
             var ballPosition = this.getCaughtBallPosition(receiver);
             this.ballSprite.body.reset(ballPosition.x, ballPosition.y);
@@ -367,6 +402,14 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
                     }, _this.calculateTimeout(settings_1.throwDelay, settings_1.throwDelayVariance));
                 }, this.calculateTimeout(settings_1.catchDelay, settings_1.catchDelayVariance));
             }
+        };
+        CyberballScene.prototype.getCPUPosition = function (i) {
+            var padding = 75;
+            return new phaser_1.default.Geom.Point(((this.sys.canvas.width - (padding * 2)) / (this.settings.computerPlayers.length - 1)) * i + padding, i === 0 || i === this.settings.computerPlayers.length - 1 ? this.sys.canvas.height / 2 : padding);
+        };
+        CyberballScene.prototype.getPlayerPosition = function () {
+            var padding = 75;
+            return new phaser_1.default.Geom.Point(this.sys.canvas.width / 2, this.sys.canvas.height - padding);
         };
         CyberballScene.prototype.getCaughtBallPosition = function (target) {
             return new phaser_1.default.Geom.Point(target.x + (target.flipX ? -50 : 50), target.y - 15);

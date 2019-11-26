@@ -1,19 +1,37 @@
 import { CyberballScene } from './../scenes/cyberball';
-import { defaultSettings } from './../models/settings-model';
+import { defaultSettings, SettingsModel } from './../models/settings-model';
 import Phaser from 'phaser';
-
-const gameWidth = 800;
-const gameHeight = 440;
 
 //     // TODO: Use events to talk to Qualtrics?
 //     //setTimeout(() => { window.dispatchEvent(new CustomEvent('complete', { detail: { test: 'test' } }))}, 1000)
 
 
 export class GameViewModel {
+    settings: SettingsModel = defaultSettings;
+
+    // Chat:
+
+    chatMessage: string;
+    chatMessages: Array<{sender: string, text: string}> = [];
+
+    sendMessage() {
+        this.chatMessages.push({
+            sender: this.settings.player.name,
+            text: this.chatMessage
+        });
+
+        this.chatMessage = '';
+    }
+
+    // Game:
+
+    gameWidth = 800;
+    gameHeight = 460;
+
     gameConfig: Phaser.Types.Core.GameConfig = {
         type: Phaser.AUTO,
-        width: gameWidth,
-        height: gameHeight,
+        width: this.gameWidth,
+        height: this.gameHeight,
         scene: new CyberballScene(defaultSettings),
         physics: {
             default: 'arcade',

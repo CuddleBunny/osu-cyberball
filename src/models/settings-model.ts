@@ -9,8 +9,11 @@ export class SettingsModel {
     throwCount: number = 10;
     ballSpeed: number = 500;
 
-    // TODO: schedule
-    // TODO: delay
+    useSchedule: boolean = false;
+    scheduleHonorsThrowCount: boolean = false;
+    schedule: Array<number> = [
+        1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0
+    ];
 
     // Graphics
     baseUrl: string = './assets';
@@ -34,6 +37,12 @@ export const defaultSettings = new SettingsModel({
         }),
         new CPUModel({
             name: 'Player 3'
+        }),
+        new CPUModel({
+            name: 'Player 4'
+        }),
+        new CPUModel({
+            name: 'Player 5'
         })
     ]
 });
