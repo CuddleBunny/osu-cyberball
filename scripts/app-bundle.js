@@ -115,11 +115,12 @@ define('models/player-model',["require", "exports"], function (require, exports)
     exports.PlayerModel = PlayerModel;
 });
 ;
-define('models/settings-model',["require", "exports", "./cpu-model"], function (require, exports, cpu_model_1) {
+define('models/settings-model',["require", "exports", "./player-model", "./cpu-model"], function (require, exports, player_model_1, cpu_model_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var SettingsModel = (function () {
         function SettingsModel(init) {
+            this.player = new player_model_1.PlayerModel();
             this.throwCount = 10;
             this.ballSpeed = 500;
             this.useSchedule = false;
@@ -145,12 +146,6 @@ define('models/settings-model',["require", "exports", "./cpu-model"], function (
             }),
             new cpu_model_1.CPUModel({
                 name: 'Player 3'
-            }),
-            new cpu_model_1.CPUModel({
-                name: 'Player 4'
-            }),
-            new cpu_model_1.CPUModel({
-                name: 'Player 5'
             })
         ]
     });
@@ -196,18 +191,37 @@ define('pages/game',["require", "exports", "./../scenes/cyberball", "./../models
 ;
 define('text!pages/game.css',[],function(){return ".chat {\n\n}\n\n.chat-log {\n    border: 1px solid black;\n    border-bottom: 0;\n    height: 100px;\n    overflow-y: auto;\n}\n\n.chat-input {\n    display: flex;\n}\n\n.chat-input input {\n    flex: 1;\n}\n";});;
 define('text!pages/game.html',[],function(){return "<template>\n    <require from=\"./game.css\"></require>\n\n    <h1>Cyberball</h1>\n\n    <phaser-game config.bind=\"gameConfig\"></phaser-game>\n\n    <div  if.bind=\"settings.chatEnabled\" class=\"chat\" css=\"width: ${gameWidth}px\">\n        <div class=\"chat-log\">\n            <div repeat.for=\"message of chatMessages\">\n                <strong>${message.sender}</strong>: <span>${message.text}</span>\n            </div>\n        </div>\n\n        <form class=\"chat-input\" submit.delegate=\"sendMessage()\">\n            <input value.bind=\"chatMessage\" />\n            <button type=\"submit\">Send</button>\n        </form>\n    </div>\n</template>\n";});;
-define('pages/home',["require", "exports"], function (require, exports) {
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+define('pages/home',["require", "exports", "aurelia-templating-resources", "aurelia-framework", "models/settings-model"], function (require, exports, aurelia_templating_resources_1, aurelia_framework_1, settings_model_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var HomeViewModel = (function () {
-        function HomeViewModel() {
+        function HomeViewModel(signaler) {
+            this.signaler = signaler;
+            this.settings = settings_model_1.defaultSettings;
         }
+        HomeViewModel.prototype.saveSettings = function () {
+            console.log('settings');
+            this.signaler.signal('save-settings');
+        };
+        HomeViewModel = __decorate([
+            aurelia_framework_1.autoinject(),
+            __metadata("design:paramtypes", [aurelia_templating_resources_1.BindingSignaler])
+        ], HomeViewModel);
         return HomeViewModel;
     }());
     exports.HomeViewModel = HomeViewModel;
 });
 ;
-define('text!pages/home.html',[],function(){return "<template>\n    <h1>Welcome to Cyberball</h1>\n</template>\n";});;
+define('text!pages/home.html',[],function(){return "<template>\n    <require from=\"resources/value-converters/json-value-converter\"></require>\n    <require from=\"resources/value-converters/integer-value-converter\"></require>\n\n    <style>\n        body {\n            background: #111;\n            color: #eee;\n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n        }\n\n        .input {\n            display: flex;\n            margin-bottom: 5px;\n        }\n\n        label {\n            width: 180px;\n        }\n\n        input[type=text] {\n            flex: 1;\n        }\n    </style>\n\n    <div style=\"display: flex; height: 100%;\">\n        <div style=\"margin-right: 20px;\">\n            <h1>Cyberball Configuration Builder</h1>\n\n            <h2>Player</h2>\n\n            <div class=\"input\">\n                <label for=\"player.name\">Name</label>\n                <input type=\"text\" value.bind=\"settings.player.name\" />\n            </div>\n\n            <h2>CPUs</h2>\n\n            <div repeat.for=\"cpu of settings.computerPlayers\">\n                <div class=\"input\">\n                    <label>Name</label>\n                    <input type=\"text\" value.bind=\"cpu.name\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Throw Delay</label>\n                    <input type=\"number\" value.bind=\"cpu.throwDelay | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Throw Delay Variance</label>\n                    <input type=\"number\" value.bind=\"cpu.throwDelayVariance | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Catch Delay</label>\n                    <input type=\"number\" value.bind=\"cpu.catchDelay | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Catch Delay Variance</label>\n                    <input type=\"number\" value.bind=\"cpu.catchDelayVariance | integer\" />\n                </div>\n\n                <hr />\n            </div>\n\n            <h2>Gameplay</h2>\n\n            <div class=\"input\">\n                <label>Throw Count</label>\n                <input type=\"number\" value.bind=\"settings.throwCount | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Ball Speed</label>\n                <input type=\"number\" value.bind=\"settings.ballSpeed | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Use Schedule</label>\n                <input type=\"checkbox\" checked.bind=\"settings.useSchedule\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Schedule Honors Throw Count</label>\n                <input type=\"checkbox\" checked.bind=\"settings.scheduleHonorsThrowCount\" />\n            </div>\n\n            <button click.delegate=\"saveSettings()\">Save</button>\n        </div>\n\n        <div style=\"overflow-y: auto;\">\n            <pre>${settings | json & signal: 'save-settings'}</pre>\n        </div>\n    </div>\n</template>\n";});;
 define('resources/index',["require", "exports", "aurelia-framework"], function (require, exports, aurelia_framework_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -258,6 +272,48 @@ define('resources/phaser-game/phaser-game',["require", "exports", "aurelia-frame
         return PhaserGameCustomElement;
     }());
     exports.PhaserGameCustomElement = PhaserGameCustomElement;
+});
+;
+define('resources/value-converters/integer-value-converter',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var IntegerValueConverter = (function () {
+        function IntegerValueConverter() {
+        }
+        IntegerValueConverter.prototype.fromView = function (value) {
+            return parseInt(value);
+        };
+        return IntegerValueConverter;
+    }());
+    exports.IntegerValueConverter = IntegerValueConverter;
+});
+;
+define('resources/value-converters/json-value-converter',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var JsonValueConverter = (function () {
+        function JsonValueConverter() {
+        }
+        JsonValueConverter.prototype.toView = function (value) {
+            return JSON.stringify(value, null, 2);
+        };
+        return JsonValueConverter;
+    }());
+    exports.JsonValueConverter = JsonValueConverter;
+});
+;
+define('resources/value-converters/number-value-converter',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var IntegerValueConverter = (function () {
+        function IntegerValueConverter() {
+        }
+        IntegerValueConverter.prototype.fromView = function (value) {
+            return parseInt(value);
+        };
+        return IntegerValueConverter;
+    }());
+    exports.IntegerValueConverter = IntegerValueConverter;
 });
 ;
 var __extends = (this && this.__extends) || (function () {

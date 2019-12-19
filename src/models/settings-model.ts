@@ -2,7 +2,7 @@ import { PlayerModel } from './player-model';
 import { CPUModel } from './cpu-model';
 
 export class SettingsModel {
-    player: PlayerModel;
+    player: PlayerModel = new PlayerModel();
     computerPlayers: Array<CPUModel>;
 
     // Gameplay
@@ -37,12 +37,6 @@ export const defaultSettings = new SettingsModel({
         }),
         new CPUModel({
             name: 'Player 3'
-        }),
-        new CPUModel({
-            name: 'Player 4'
-        }),
-        new CPUModel({
-            name: 'Player 5'
         })
     ]
 });

@@ -1,3 +1,97 @@
 <template>
-    <h1>Welcome to Cyberball</h1>
+    <require from="resources/value-converters/json-value-converter"></require>
+    <require from="resources/value-converters/integer-value-converter"></require>
+
+    <style>
+        body {
+            background: #111;
+            color: #eee;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .input {
+            display: flex;
+            margin-bottom: 5px;
+        }
+
+        label {
+            width: 180px;
+        }
+
+        input[type=text] {
+            flex: 1;
+        }
+    </style>
+
+    <div style="display: flex; height: 100%;">
+        <div style="margin-right: 20px;">
+            <h1>Cyberball Configuration Builder</h1>
+
+            <h2>Player</h2>
+
+            <div class="input">
+                <label for="player.name">Name</label>
+                <input type="text" value.bind="settings.player.name" />
+            </div>
+
+            <h2>CPUs</h2>
+
+            <div repeat.for="cpu of settings.computerPlayers">
+                <div class="input">
+                    <label>Name</label>
+                    <input type="text" value.bind="cpu.name" />
+                </div>
+
+                <div class="input">
+                    <label>Throw Delay</label>
+                    <input type="number" value.bind="cpu.throwDelay | integer" />
+                </div>
+
+                <div class="input">
+                    <label>Throw Delay Variance</label>
+                    <input type="number" value.bind="cpu.throwDelayVariance | integer" />
+                </div>
+
+                <div class="input">
+                    <label>Catch Delay</label>
+                    <input type="number" value.bind="cpu.catchDelay | integer" />
+                </div>
+
+                <div class="input">
+                    <label>Catch Delay Variance</label>
+                    <input type="number" value.bind="cpu.catchDelayVariance | integer" />
+                </div>
+
+                <hr />
+            </div>
+
+            <h2>Gameplay</h2>
+
+            <div class="input">
+                <label>Throw Count</label>
+                <input type="number" value.bind="settings.throwCount | integer" />
+            </div>
+
+            <div class="input">
+                <label>Ball Speed</label>
+                <input type="number" value.bind="settings.ballSpeed | integer" />
+            </div>
+
+            <div class="input">
+                <label>Use Schedule</label>
+                <input type="checkbox" checked.bind="settings.useSchedule" />
+            </div>
+
+            <div class="input">
+                <label>Schedule Honors Throw Count</label>
+                <input type="checkbox" checked.bind="settings.scheduleHonorsThrowCount" />
+            </div>
+
+            <button click.delegate="saveSettings()">Save</button>
+        </div>
+
+        <div style="overflow-y: auto;">
+            <pre>${settings | json & signal: 'save-settings'}</pre>
+        </div>
+    </div>
 </template>
