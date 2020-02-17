@@ -23,7 +23,7 @@
         }
     </style>
 
-    <div style="display: flex; height: 100%;">
+    <div style="display: flex;">
         <div style="margin-right: 20px;">
             <h1>Cyberball Configuration Builder</h1>
 
@@ -34,7 +34,11 @@
                 <input type="text" value.bind="settings.player.name" />
             </div>
 
-            <h2>CPUs</h2>
+            <h2>
+                CPUs
+                <button click.delegate="addCPU()">+ Add CPU</button>
+                <button click.delegate="removeCPU()">- Remove CPU</button>
+            </h2>
 
             <div repeat.for="cpu of settings.computerPlayers">
                 <div class="input">
