@@ -14,12 +14,23 @@
             margin-bottom: 5px;
         }
 
-        label {
+        .input label {
             width: 180px;
         }
 
-        input[type=text], input[type=number] {
-            flex: 1;
+        .input label + * {
+            box-sizing: border-box;
+            max-width: 300px;
+        }
+
+        .input input[type=text], .input input[type=number] {
+            flex: 1 1 100%;
+            min-width: 0;
+            width: auto;
+        }
+
+        .input > div {
+            display: flex;
         }
     </style>
 
@@ -64,6 +75,15 @@
                 <div class="input">
                     <label>Catch Delay Variance</label>
                     <input type="number" value.bind="cpu.catchDelayVariance | integer" />
+                </div>
+
+
+                <div class="input">
+                    <label>Target Preference</label>
+
+                    <div>
+                        <input repeat.for="target of cpu.targetPreference" type="number" value.bind="cpu.targetPreference[$index] | integer" />
+                    </div>
                 </div>
 
                 <hr />

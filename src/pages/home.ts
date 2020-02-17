@@ -13,14 +13,21 @@ export class HomeViewModel {
         this.settings.computerPlayers.push(new CPUModel({
             name: `Player ${this.settings.computerPlayers.length + 2}`
         }));
+
+        this.settings.computerPlayers.forEach(cpu => {
+            cpu.targetPreference.push(0);
+        });
     }
 
     removeCPU() {
         this.settings.computerPlayers.pop();
+
+        this.settings.computerPlayers.forEach(cpu => {
+            cpu.targetPreference.pop();
+        });
     }
 
     saveSettings() {
-        console.log('settings');
         this.signaler.signal('save-settings');
     }
 }
