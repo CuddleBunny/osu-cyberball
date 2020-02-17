@@ -10,7 +10,24 @@ export class GameViewModel {
     settings: SettingsModel = defaultSettings;
 
     activate(params) {
-        console.log(params);
+        if('settings' in params) {
+            this.settings = new SettingsModel(JSON.parse(atob(params.settings)));
+        }
+    }
+
+    bind() {
+        this.gameConfig  = {
+            type: Phaser.AUTO,
+            width: this.gameWidth,
+            height: this.gameHeight,
+            scene: new CyberballScene(this.settings),
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    debug: true
+                }
+            }
+        };
     }
 
 
@@ -33,16 +50,5 @@ export class GameViewModel {
     gameWidth = 800;
     gameHeight = 460;
 
-    gameConfig: Phaser.Types.Core.GameConfig = {
-        type: Phaser.AUTO,
-        width: this.gameWidth,
-        height: this.gameHeight,
-        scene: new CyberballScene(defaultSettings),
-        physics: {
-            default: 'arcade',
-            arcade: {
-                debug: true
-            }
-        }
-    }
+    gameConfig: Phaser.Types.Core.GameConfig;
 }

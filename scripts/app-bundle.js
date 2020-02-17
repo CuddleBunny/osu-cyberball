@@ -164,11 +164,19 @@ define('pages/game',["require", "exports", "./../scenes/cyberball", "./../models
             this.chatMessages = [];
             this.gameWidth = 800;
             this.gameHeight = 460;
+        }
+        GameViewModel.prototype.activate = function (params) {
+            if ('settings' in params) {
+                this.settings = new settings_model_1.SettingsModel(JSON.parse(atob(params.settings)));
+                console.log(this.settings);
+            }
+        };
+        GameViewModel.prototype.bind = function () {
             this.gameConfig = {
                 type: phaser_1.default.AUTO,
                 width: this.gameWidth,
                 height: this.gameHeight,
-                scene: new cyberball_1.CyberballScene(settings_model_1.defaultSettings),
+                scene: new cyberball_1.CyberballScene(this.settings),
                 physics: {
                     default: 'arcade',
                     arcade: {
@@ -176,9 +184,6 @@ define('pages/game',["require", "exports", "./../scenes/cyberball", "./../models
                     }
                 }
             };
-        }
-        GameViewModel.prototype.activate = function (params) {
-            console.log(params);
         };
         GameViewModel.prototype.sendMessage = function () {
             this.chatMessages.push({
