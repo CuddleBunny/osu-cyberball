@@ -9,6 +9,11 @@ import Phaser from 'phaser';
 export class GameViewModel {
     settings: SettingsModel = defaultSettings;
 
+    activate(params) {
+        console.log(params);
+    }
+
+
     // Chat:
 
     chatMessage: string;

@@ -4,12 +4,15 @@
   "description": "A clone of Empirisoft's Cyberball: Cyberball is a virtual ball-toss game that can be used for research on ostracism, social exclusion, or rejection. It has also been used to study discrimination and prejudice (in these instances, Cyberball ball toss choices are used as Dependent Variable).",
   "license": "MIT",
   "dependencies": {
+    "@types/clipboard": "^2.0.1",
     "aurelia-animator-css": "^1.0.4",
     "aurelia-bootstrapper": "^2.3.2",
+    "clipboard": "^2.0.4",
     "phaser": "^3.19.0"
   },
   "devDependencies": {
     "@types/jasmine": "^2.8.9",
+    "@types/lz-string": "^1.3.33",
     "@types/node": "^10.11.6",
     "aurelia-cli": "^1.2.2",
     "aurelia-testing": "^1.0.0",

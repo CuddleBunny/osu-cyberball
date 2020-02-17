@@ -177,6 +177,9 @@ define('pages/game',["require", "exports", "./../scenes/cyberball", "./../models
                 }
             };
         }
+        GameViewModel.prototype.activate = function (params) {
+            console.log(params);
+        };
         GameViewModel.prototype.sendMessage = function () {
             this.chatMessages.push({
                 sender: this.settings.player.name,
@@ -189,8 +192,8 @@ define('pages/game',["require", "exports", "./../scenes/cyberball", "./../models
     exports.GameViewModel = GameViewModel;
 });
 ;
-define('text!pages/game.css',[],function(){return ".chat {\n\n}\n\n.chat-log {\n    border: 1px solid black;\n    border-bottom: 0;\n    height: 100px;\n    overflow-y: auto;\n}\n\n.chat-input {\n    display: flex;\n}\n\n.chat-input input {\n    flex: 1;\n}\n";});;
-define('text!pages/game.html',[],function(){return "<template>\n    <require from=\"./game.css\"></require>\n\n    <h1>Cyberball</h1>\n\n    <phaser-game config.bind=\"gameConfig\"></phaser-game>\n\n    <div  if.bind=\"settings.chatEnabled\" class=\"chat\" css=\"width: ${gameWidth}px\">\n        <div class=\"chat-log\">\n            <div repeat.for=\"message of chatMessages\">\n                <strong>${message.sender}</strong>: <span>${message.text}</span>\n            </div>\n        </div>\n\n        <form class=\"chat-input\" submit.delegate=\"sendMessage()\">\n            <input value.bind=\"chatMessage\" />\n            <button type=\"submit\">Send</button>\n        </form>\n    </div>\n</template>\n";});;
+define('text!pages/game.css',[],function(){return "canvas {\n    max-width: 100%;\n}\n\n.chat-log {\n    border: 1px solid black;\n    border-bottom: 0;\n    height: 100px;\n    overflow-y: auto;\n}\n\n.chat-input {\n    display: flex;\n}\n\n.chat-input input {\n    flex: 1;\n}\n";});;
+define('text!pages/game.html',[],function(){return "<template>\n    <require from=\"./game.css\"></require>\n\n    <h1>Cyberball</h1>\n\n    <phaser-game config.bind=\"gameConfig\"></phaser-game>\n\n    <div if.bind=\"settings.chatEnabled\" class=\"chat\" css=\"width: ${gameWidth}px\">\n        <div class=\"chat-log\">\n            <div repeat.for=\"message of chatMessages\">\n                <strong>${message.sender}</strong>: <span>${message.text}</span>\n            </div>\n        </div>\n\n        <form class=\"chat-input\" submit.delegate=\"sendMessage()\">\n            <input value.bind=\"chatMessage\" />\n            <button type=\"submit\">Send</button>\n        </form>\n    </div>\n</template>\n";});;
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -200,14 +203,24 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-define('pages/home',["require", "exports", "aurelia-templating-resources", "aurelia-framework", "models/settings-model", "models/cpu-model"], function (require, exports, aurelia_templating_resources_1, aurelia_framework_1, settings_model_1, cpu_model_1) {
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+define('pages/home',["require", "exports", "aurelia-templating-resources", "aurelia-framework", "models/settings-model", "models/cpu-model", "clipboard"], function (require, exports, aurelia_templating_resources_1, aurelia_framework_1, settings_model_1, cpu_model_1, clipboard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    clipboard_1 = __importDefault(clipboard_1);
     var HomeViewModel = (function () {
         function HomeViewModel(signaler) {
             this.signaler = signaler;
             this.settings = settings_model_1.defaultSettings;
         }
+        HomeViewModel.prototype.bind = function () {
+            this.clipboard = new clipboard_1.default('#copy');
+        };
+        HomeViewModel.prototype.unbind = function () {
+            this.clipboard.destroy();
+        };
         HomeViewModel.prototype.addCPU = function () {
             this.settings.computerPlayers.push(new cpu_model_1.CPUModel({
                 name: "Player " + (this.settings.computerPlayers.length + 2)
@@ -225,6 +238,19 @@ define('pages/home',["require", "exports", "aurelia-templating-resources", "aure
         HomeViewModel.prototype.saveSettings = function () {
             this.signaler.signal('save-settings');
         };
+        Object.defineProperty(HomeViewModel.prototype, "url", {
+            get: function () {
+                var url = document.location.href;
+                url += '#game?settings=';
+                url += btoa(JSON.stringify(this.settings));
+                return url;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        HomeViewModel.prototype.testGame = function () {
+            window.open(this.url);
+        };
         HomeViewModel = __decorate([
             aurelia_framework_1.autoinject(),
             __metadata("design:paramtypes", [aurelia_templating_resources_1.BindingSignaler])
@@ -234,7 +260,7 @@ define('pages/home',["require", "exports", "aurelia-templating-resources", "aure
     exports.HomeViewModel = HomeViewModel;
 });
 ;
-define('text!pages/home.html',[],function(){return "<template>\n    <require from=\"resources/value-converters/json-value-converter\"></require>\n    <require from=\"resources/value-converters/integer-value-converter\"></require>\n\n    <style>\n        body {\n            background: #111;\n            color: #eee;\n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n        }\n\n        .input {\n            display: flex;\n            margin-bottom: 5px;\n        }\n\n        .input label {\n            width: 180px;\n        }\n\n        .input label + * {\n            box-sizing: border-box;\n            max-width: 300px;\n        }\n\n        .input input[type=text], .input input[type=number] {\n            flex: 1 1 100%;\n            min-width: 0;\n            width: auto;\n        }\n\n        .input > div {\n            display: flex;\n        }\n    </style>\n\n    <div style=\"display: flex;\">\n        <div style=\"margin-right: 20px;\">\n            <h1>Cyberball Configuration Builder</h1>\n\n            <h2>Player</h2>\n\n            <div class=\"input\">\n                <label for=\"player.name\">Name</label>\n                <input type=\"text\" value.bind=\"settings.player.name\" />\n            </div>\n\n            <h2>\n                CPUs\n                <button click.delegate=\"addCPU()\">+ Add CPU</button>\n                <button click.delegate=\"removeCPU()\">- Remove CPU</button>\n            </h2>\n\n            <div repeat.for=\"cpu of settings.computerPlayers\">\n                <div class=\"input\">\n                    <label>Name</label>\n                    <input type=\"text\" value.bind=\"cpu.name\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Throw Delay</label>\n                    <input type=\"number\" value.bind=\"cpu.throwDelay | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Throw Delay Variance</label>\n                    <input type=\"number\" value.bind=\"cpu.throwDelayVariance | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Catch Delay</label>\n                    <input type=\"number\" value.bind=\"cpu.catchDelay | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Catch Delay Variance</label>\n                    <input type=\"number\" value.bind=\"cpu.catchDelayVariance | integer\" />\n                </div>\n\n\n                <div class=\"input\">\n                    <label>Target Preference</label>\n\n                    <div>\n                        <input repeat.for=\"target of cpu.targetPreference\" type=\"number\" value.bind=\"cpu.targetPreference[$index] | integer\" />\n                    </div>\n                </div>\n\n                <hr />\n            </div>\n\n            <h2>Gameplay</h2>\n\n            <div class=\"input\">\n                <label>Throw Count</label>\n                <input type=\"number\" value.bind=\"settings.throwCount | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Ball Speed</label>\n                <input type=\"number\" value.bind=\"settings.ballSpeed | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Use Schedule</label>\n                <input type=\"checkbox\" checked.bind=\"settings.useSchedule\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Schedule Honors Throw Count</label>\n                <input type=\"checkbox\" checked.bind=\"settings.scheduleHonorsThrowCount\" />\n            </div>\n\n            <button click.delegate=\"saveSettings()\">Save</button>\n        </div>\n\n        <div style=\"overflow-y: auto;\">\n            <pre>${settings | json & signal: 'save-settings'}</pre>\n        </div>\n    </div>\n</template>\n";});;
+define('text!pages/home.html',[],function(){return "<template>\n    <require from=\"resources/value-converters/json-value-converter\"></require>\n    <require from=\"resources/value-converters/integer-value-converter\"></require>\n\n    <style>\n        body {\n            background: #111;\n            color: #eee;\n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n        }\n\n        .input {\n            display: flex;\n            margin-bottom: 5px;\n        }\n\n        .input label {\n            width: 180px;\n        }\n\n        .input label + * {\n            box-sizing: border-box;\n            max-width: 300px;\n        }\n\n        .input input[type=text], .input input[type=number] {\n            flex: 1 1 100%;\n            min-width: 0;\n            width: auto;\n        }\n\n        .input > div {\n            display: flex;\n        }\n\n        pre {\n            max-width: 100%;\n        }\n    </style>\n\n    <div style=\"display: flex;\">\n        <div style=\"margin-right: 20px;\">\n            <h1>Cyberball Configuration Builder</h1>\n\n            <h2>Player</h2>\n\n            <div class=\"input\">\n                <label for=\"player.name\">Name</label>\n                <input type=\"text\" value.bind=\"settings.player.name\" />\n            </div>\n\n            <h2>\n                CPUs\n                <button click.delegate=\"addCPU()\">+ Add CPU</button>\n                <button click.delegate=\"removeCPU()\">- Remove CPU</button>\n            </h2>\n\n            <div repeat.for=\"cpu of settings.computerPlayers\">\n                <div class=\"input\">\n                    <label>Name</label>\n                    <input type=\"text\" value.bind=\"cpu.name\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Throw Delay</label>\n                    <input type=\"number\" value.bind=\"cpu.throwDelay | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Throw Delay Variance</label>\n                    <input type=\"number\" value.bind=\"cpu.throwDelayVariance | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Catch Delay</label>\n                    <input type=\"number\" value.bind=\"cpu.catchDelay | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Catch Delay Variance</label>\n                    <input type=\"number\" value.bind=\"cpu.catchDelayVariance | integer\" />\n                </div>\n\n\n                <div class=\"input\">\n                    <label>Target Preference</label>\n\n                    <div>\n                        <input repeat.for=\"target of cpu.targetPreference\" type=\"number\" value.bind=\"cpu.targetPreference[$index] | integer\" />\n                    </div>\n                </div>\n\n                <hr />\n            </div>\n\n            <h2>Gameplay</h2>\n\n            <div class=\"input\">\n                <label>Throw Count</label>\n                <input type=\"number\" value.bind=\"settings.throwCount | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Ball Speed</label>\n                <input type=\"number\" value.bind=\"settings.ballSpeed | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Use Schedule</label>\n                <input type=\"checkbox\" checked.bind=\"settings.useSchedule\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Schedule Honors Throw Count</label>\n                <input type=\"checkbox\" checked.bind=\"settings.scheduleHonorsThrowCount\" />\n            </div>\n\n            <button click.delegate=\"saveSettings()\">Save</button>\n        </div>\n\n        <div style=\"overflow-y: auto;\">\n            <pre>${settings | json & signal: 'save-settings'}</pre>\n        </div>\n    </div>\n\n    <div>\n        <h1>\n            Code\n            <button id=\"copy\" data-clipboard-target=\"#code\">&#10697; Copy</button>\n            <button click.delegate=\"testGame()\">&#129514; Test</button>\n        </h1>\n        <pre id=\"code\">&lt;iframe src=\"${url}\" /&gt;</pre>\n    </div>\n</template>\n";});;
 define('resources/index',["require", "exports", "aurelia-framework"], function (require, exports, aurelia_framework_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });

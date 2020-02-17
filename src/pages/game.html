@@ -5,7 +5,7 @@
 
     <phaser-game config.bind="gameConfig"></phaser-game>
 
-    <div  if.bind="settings.chatEnabled" class="chat" css="width: ${gameWidth}px">
+    <div if.bind="settings.chatEnabled" class="chat" css="width: ${gameWidth}px">
         <div class="chat-log">
             <div repeat.for="message of chatMessages">
                 <strong>${message.sender}</strong>: <span>${message.text}</span>
