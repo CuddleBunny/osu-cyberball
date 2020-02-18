@@ -22,10 +22,7 @@ export class GameViewModel {
             height: this.gameHeight,
             scene: new CyberballScene(this.settings),
             physics: {
-                default: 'arcade',
-                arcade: {
-                    debug: true
-                }
+                default: 'arcade'
             }
         };
     }

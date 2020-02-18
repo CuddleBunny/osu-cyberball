@@ -178,10 +178,7 @@ define('pages/game',["require", "exports", "./../scenes/cyberball", "./../models
                 height: this.gameHeight,
                 scene: new cyberball_1.CyberballScene(this.settings),
                 physics: {
-                    default: 'arcade',
-                    arcade: {
-                        debug: true
-                    }
+                    default: 'arcade'
                 }
             };
         };
@@ -286,7 +283,7 @@ define('pages/message-test',["require", "exports", "aurelia-templating-resources
         MessageTestViewModel.prototype.bind = function () {
             var _this = this;
             window.addEventListener('message', function (e) {
-                console.log('message', e);
+                console.log('message', e.data);
                 _this.messages.push(e.data);
                 _this.signaler.signal('message');
             });
@@ -441,7 +438,6 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
             this.playerSprite = this.playerGroup.create(playerPosition.x, playerPosition.y, 'player', 'active/1.png');
             this.playerSprite.setData('settings', this.settings.player);
             this.add.text(playerPosition.x, playerPosition.y + this.playerSprite.height / 2 + 10, this.settings.player.name, textStyle).setOrigin(0.5);
-            console.log(this.playerSprite);
             var _loop_1 = function (i) {
                 var cpuPosition = this_1.getCPUPosition(i);
                 var cpuSprite = this_1.playerGroup.create(cpuPosition.x, cpuPosition.y, 'player', 'idle/1.png');

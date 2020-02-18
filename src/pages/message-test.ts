@@ -9,7 +9,7 @@ export class MessageTestViewModel {
 
     bind() {
         window.addEventListener('message', (e) => {
-            console.log('message', e);
+            console.log('message', e.data);
             this.messages.push(e.data);
 
             this.signaler.signal('message');

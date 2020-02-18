@@ -72,8 +72,6 @@ export class CyberballScene extends Phaser.Scene {
 
         this.add.text(playerPosition.x, playerPosition.y + this.playerSprite.height / 2 + 10, this.settings.player.name, textStyle).setOrigin(0.5);
 
-        console.log(this.playerSprite);
-
         // CPU:
 
         for (let i = 0; i < this.settings.computerPlayers.length; i++) {
@@ -124,6 +122,7 @@ export class CyberballScene extends Phaser.Scene {
     // Mechanics:
 
     public throwBall(thrower: Phaser.GameObjects.Sprite, receiver: Phaser.GameObjects.Sprite) {
+        // TODO: Post wait timers
         window.parent.postMessage({
             type: 'throw',
             thrower: thrower.getData('settings').name,
