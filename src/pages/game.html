@@ -1,8 +1,6 @@
 <template>
     <require from="./game.css"></require>
 
-    <h1>Cyberball</h1>
-
     <phaser-game config.bind="gameConfig"></phaser-game>
 
     <div if.bind="settings.chatEnabled" class="chat" css="width: ${gameWidth}px">

@@ -10,7 +10,8 @@ export class App {
 
         config.map([
             { route: ['', 'home'], name: 'home', moduleId: 'pages/home' },
-            { route: 'game', name: 'game', moduleId: 'pages/game' }
+            { route: 'game', name: 'game', moduleId: 'pages/game' },
+            { route: 'message-test', name: 'message-test', moduleId: 'pages/message-test' }
         ]);
     }
 }

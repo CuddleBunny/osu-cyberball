@@ -68,6 +68,7 @@ export class CyberballScene extends Phaser.Scene {
 
         this.playerGroup = this.physics.add.group({ immovable: true, allowGravity: false });
         this.playerSprite = this.playerGroup.create(playerPosition.x, playerPosition.y, 'player', 'active/1.png');
+        this.playerSprite.setData('settings', this.settings.player);
 
         this.add.text(playerPosition.x, playerPosition.y + this.playerSprite.height / 2 + 10, this.settings.player.name, textStyle).setOrigin(0.5);
 
@@ -123,6 +124,12 @@ export class CyberballScene extends Phaser.Scene {
     // Mechanics:
 
     public throwBall(thrower: Phaser.GameObjects.Sprite, receiver: Phaser.GameObjects.Sprite) {
+        window.parent.postMessage({
+            type: 'throw',
+            thrower: thrower.getData('settings').name,
+            receiver: receiver.getData('settings').name
+        }, '*');
+
         // Update trackers:
 
         this.playerHasBall = this.ballHeld = false;
@@ -145,10 +152,10 @@ export class CyberballScene extends Phaser.Scene {
         // Update trackers:
 
         this.ballHeld = true;
-        this.throwCount++;
 
         if(this.throwCount >= this.settings.throwCount) {
-            // TODO: Trigger game end.
+
+            window.parent.postMessage({ type: 'game-end' }, '*');
         }
 
         // Player animation:

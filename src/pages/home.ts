@@ -42,9 +42,9 @@ export class HomeViewModel {
     }
 
     get url() {
-        let url = document.location.href;
+        let url = document.location.origin;
 
-        url += '#game?settings=';
+        url += '/#game?settings=';
         url += btoa(JSON.stringify(this.settings));
 
         return url;

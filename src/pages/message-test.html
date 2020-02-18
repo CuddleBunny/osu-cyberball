@@ -1,0 +1,8 @@
+<template>
+    <require from="resources/value-converters/json-value-converter"></require>
+
+    <iframe src="/#game" width="800" height="600"></iframe>
+    <div style="border: 1px solid black; width: 800px; height: 200px; overflow-y: auto;">
+        <div repeat.for="message of messages">${message | json & signal: 'message'}</div>
+    </div>
+</template>
