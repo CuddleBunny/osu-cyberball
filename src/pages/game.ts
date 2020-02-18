@@ -9,9 +9,20 @@ import Phaser from 'phaser';
 export class GameViewModel {
     settings: SettingsModel = defaultSettings;
 
+    // Game:
+
+    gameWidth = 800;
+    gameHeight = 460;
+
+    gameConfig: Phaser.Types.Core.GameConfig;
+
     activate(params) {
         if('settings' in params) {
             this.settings = new SettingsModel(JSON.parse(atob(params.settings)));
+        }
+
+        if('playerName' in params) {
+            this.settings.player.name = params.playerName;
         }
     }
 
@@ -27,7 +38,6 @@ export class GameViewModel {
         };
     }
 
-
     // Chat:
 
     chatMessage: string;
@@ -41,11 +51,4 @@ export class GameViewModel {
 
         this.chatMessage = '';
     }
-
-    // Game:
-
-    gameWidth = 800;
-    gameHeight = 460;
-
-    gameConfig: Phaser.Types.Core.GameConfig;
 }

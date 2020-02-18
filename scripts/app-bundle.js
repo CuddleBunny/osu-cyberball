@@ -162,13 +162,16 @@ define('pages/game',["require", "exports", "./../scenes/cyberball", "./../models
     var GameViewModel = (function () {
         function GameViewModel() {
             this.settings = settings_model_1.defaultSettings;
-            this.chatMessages = [];
             this.gameWidth = 800;
             this.gameHeight = 460;
+            this.chatMessages = [];
         }
         GameViewModel.prototype.activate = function (params) {
             if ('settings' in params) {
                 this.settings = new settings_model_1.SettingsModel(JSON.parse(atob(params.settings)));
+            }
+            if ('playerName' in params) {
+                this.settings.player.name = params.playerName;
             }
         };
         GameViewModel.prototype.bind = function () {
