@@ -25,7 +25,8 @@ export class HomeViewModel {
         }));
 
         this.settings.computerPlayers.forEach(cpu => {
-            cpu.targetPreference.push(0);
+            while(cpu.targetPreference.length != this.settings.computerPlayers.length)
+                cpu.targetPreference.push(0);
         });
     }
 
@@ -42,9 +43,9 @@ export class HomeViewModel {
     }
 
     get url() {
-        let url = document.location.origin;
+        let url = document.location.origin + document.location.pathname;
 
-        url += '/#game?settings=';
+        url += '#game?settings=';
         url += btoa(JSON.stringify(this.settings));
 
         return url;

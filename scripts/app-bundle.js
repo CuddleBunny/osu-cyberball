@@ -227,11 +227,13 @@ define('pages/home',["require", "exports", "aurelia-templating-resources", "aure
             this.clipboard.destroy();
         };
         HomeViewModel.prototype.addCPU = function () {
+            var _this = this;
             this.settings.computerPlayers.push(new cpu_model_1.CPUModel({
                 name: "Player " + (this.settings.computerPlayers.length + 2)
             }));
             this.settings.computerPlayers.forEach(function (cpu) {
-                cpu.targetPreference.push(0);
+                while (cpu.targetPreference.length != _this.settings.computerPlayers.length)
+                    cpu.targetPreference.push(0);
             });
         };
         HomeViewModel.prototype.removeCPU = function () {
@@ -245,8 +247,8 @@ define('pages/home',["require", "exports", "aurelia-templating-resources", "aure
         };
         Object.defineProperty(HomeViewModel.prototype, "url", {
             get: function () {
-                var url = document.location.origin;
-                url += '/#game?settings=';
+                var url = document.location.origin + document.location.pathname;
+                url += '#game?settings=';
                 url += btoa(JSON.stringify(this.settings));
                 return url;
             },
