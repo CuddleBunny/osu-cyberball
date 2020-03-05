@@ -431,6 +431,7 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
             _this.playerHasBall = true;
             _this.ballHeld = true;
             _this.throwCount = 0;
+            _this.scheduleIndex = 0;
             _this.settings = settings;
             return _this;
         }
@@ -520,7 +521,9 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
         CyberballScene.prototype.catchBall = function (receiver) {
             var _this = this;
             this.ballHeld = true;
-            if (this.throwCount >= this.settings.throwCount) {
+            if ((this.settings.useSchedule && this.scheduleIndex === this.settings.schedule.length) ||
+                (this.settings.useSchedule && this.settings.scheduleHonorsThrowCount && this.throwCount >= this.settings.throwCount) ||
+                (!this.settings.useSchedule && this.throwCount >= this.settings.throwCount)) {
                 window.parent.postMessage({ type: 'game-end' }, '*');
             }
             receiver.play('catch');
@@ -537,14 +540,22 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
                     _this.ballSprite.x = ballPosition.x;
                     _this.ballSprite.y = ballPosition.y;
                     setTimeout(function () {
-                        var random = Math.random() * 100;
-                        for (var i = 0; i < settings_1.targetPreference.length; i++) {
-                            random -= settings_1.targetPreference[i];
-                            if (random <= 0) {
-                                if (i >= _this.playerGroup.getChildren().indexOf(receiver))
-                                    i++;
-                                _this.throwBall(receiver, _this.playerGroup.getChildren()[i]);
-                                break;
+                        if (_this.settings.useSchedule) {
+                            while (_this.settings.schedule[_this.scheduleIndex] === _this.playerGroup.getChildren().indexOf(receiver))
+                                _this.scheduleIndex++;
+                            _this.throwBall(receiver, _this.playerGroup.getChildren()[_this.settings.schedule[_this.scheduleIndex]]);
+                            _this.scheduleIndex++;
+                        }
+                        else {
+                            var random = Math.random() * 100;
+                            for (var i = 0; i < settings_1.targetPreference.length; i++) {
+                                random -= settings_1.targetPreference[i];
+                                if (random <= 0) {
+                                    if (i >= _this.playerGroup.getChildren().indexOf(receiver))
+                                        i++;
+                                    _this.throwBall(receiver, _this.playerGroup.getChildren()[i]);
+                                    break;
+                                }
                             }
                         }
                     }, _this.calculateTimeout(settings_1.throwDelay, settings_1.throwDelayVariance));

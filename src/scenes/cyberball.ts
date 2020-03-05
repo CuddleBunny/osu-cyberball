@@ -23,6 +23,7 @@ export class CyberballScene extends Phaser.Scene {
     // Stats:
 
     private throwCount = 0;
+    private scheduleIndex = 0;
 
     constructor(settings: SettingsModel) {
         super({});
@@ -109,11 +110,11 @@ export class CyberballScene extends Phaser.Scene {
             let ballPosition = this.getActiveBallPosition(this.playerSprite);
             this.ballSprite.x = ballPosition.x;
             this.ballSprite.y = ballPosition.y;
-        } else if(!this.ballHeld) {
+        } else if (!this.ballHeld) {
             // Eyes on the ball:
             this.playerGroup.getChildren().forEach(c => {
                 let sprite = c as Phaser.GameObjects.Sprite;
-                if(sprite.frame.name.includes('idle'))
+                if (sprite.frame.name.includes('idle'))
                     sprite.flipX = this.ballSprite.x < sprite.x
             });
         }
@@ -152,8 +153,12 @@ export class CyberballScene extends Phaser.Scene {
 
         this.ballHeld = true;
 
-        if(this.throwCount >= this.settings.throwCount) {
-
+        // The game ends at the end of the schedule or when reaching the throw count.
+        if (
+            (this.settings.useSchedule && this.scheduleIndex === this.settings.schedule.length) ||
+            (this.settings.useSchedule && this.settings.scheduleHonorsThrowCount && this.throwCount >= this.settings.throwCount) ||
+            (!this.settings.useSchedule && this.throwCount >= this.settings.throwCount)
+        ) {
             window.parent.postMessage({ type: 'game-end' }, '*');
         }
 
@@ -179,20 +184,29 @@ export class CyberballScene extends Phaser.Scene {
                 this.ballSprite.y = ballPosition.y;
 
                 setTimeout(() => {
-                    let random = Math.random() * 100;
+                    if (this.settings.useSchedule) {
+                        // Skip self in schedule.
+                        while(this.settings.schedule[this.scheduleIndex] === this.playerGroup.getChildren().indexOf(receiver))
+                            this.scheduleIndex++
 
-                    // A psuedo-random target is selected by subtracting the target preference chance from the random number until 0 is reached
-                    for (var i = 0; i < settings.targetPreference.length; i++) {
-                        random -= settings.targetPreference[i];
+                        this.throwBall(receiver, this.playerGroup.getChildren()[this.settings.schedule[this.scheduleIndex]] as Phaser.GameObjects.Sprite)
+                        this.scheduleIndex++;
+                    } else {
+                        let random = Math.random() * 100;
 
-                        if (random <= 0) {
-                            // Exclude self
-                            if(i >= this.playerGroup.getChildren().indexOf(receiver))
-                                i++
+                        // A psuedo-random target is selected by subtracting the target preference chance from the random number until 0 is reached
+                        for (var i = 0; i < settings.targetPreference.length; i++) {
+                            random -= settings.targetPreference[i];
 
-                            this.throwBall(receiver, this.playerGroup.getChildren()[i] as Phaser.GameObjects.Sprite);
+                            if (random <= 0) {
+                                // Exclude self
+                                if (i >= this.playerGroup.getChildren().indexOf(receiver))
+                                    i++
 
-                            break;
+                                this.throwBall(receiver, this.playerGroup.getChildren()[i] as Phaser.GameObjects.Sprite);
+
+                                break;
+                            }
                         }
                     }
                 }, this.calculateTimeout(settings.throwDelay, settings.throwDelayVariance));
