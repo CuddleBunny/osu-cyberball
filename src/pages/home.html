@@ -1,6 +1,7 @@
 <template>
     <require from="resources/value-converters/json-value-converter"></require>
     <require from="resources/value-converters/integer-value-converter"></require>
+    <require from="resources/value-converters/integer-array-value-converter"></require>
 
     <style>
         body {
@@ -23,7 +24,7 @@
             max-width: 300px;
         }
 
-        .input input[type=text], .input input[type=number] {
+        .input input[type=text], .input input[type=number], textarea {
             flex: 1 1 100%;
             min-width: 0;
             width: auto;
@@ -109,6 +110,11 @@
             <div class="input">
                 <label>Use Schedule</label>
                 <input type="checkbox" checked.bind="settings.useSchedule" />
+            </div>
+
+            <div class="input" if.bind="settings.useSchedule">
+                <label>Schedule</label>
+                <textarea value.bind="settings.schedule | integerArray & updateTrigger:'blur'"></textarea>
             </div>
 
             <div class="input">
