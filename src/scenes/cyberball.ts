@@ -120,6 +120,15 @@ export class CyberballScene extends Phaser.Scene {
         }
     }
 
+    public gameOver() {
+        window.parent.postMessage({ type: 'game-end' }, '*');
+
+        this.playerGroup.children.each(child => child.removeAllListeners());
+
+        this.add.rectangle(this.sys.canvas.width / 2, this.sys.canvas.height / 2, this.sys.canvas.width, this.sys.canvas.height, 0xdddddd, 0.5);
+        this.add.text(this.sys.canvas.width / 2, this.sys.canvas.height / 2, 'Game Over', textStyle).setOrigin(0.5);
+    }
+
     // Mechanics:
 
     public throwBall(thrower: Phaser.GameObjects.Sprite, receiver: Phaser.GameObjects.Sprite) {
@@ -159,7 +168,7 @@ export class CyberballScene extends Phaser.Scene {
             (this.settings.useSchedule && this.settings.scheduleHonorsThrowCount && this.throwCount >= this.settings.throwCount) ||
             (!this.settings.useSchedule && this.throwCount >= this.settings.throwCount)
         ) {
-            window.parent.postMessage({ type: 'game-end' }, '*');
+            this.gameOver();
         }
 
         // Player animation:
