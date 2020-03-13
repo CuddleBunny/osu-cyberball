@@ -20,10 +20,13 @@ export class CyberballScene extends Phaser.Scene {
     private ballHeld = true;
     private throwTarget: Phaser.GameObjects.Sprite;
 
+    private activeTimeout;
+
     // Stats:
 
     private throwCount = 0;
     private scheduleIndex = 0;
+    private lastTime = Date.now();
 
     constructor(settings: SettingsModel) {
         super({});
@@ -123,8 +126,11 @@ export class CyberballScene extends Phaser.Scene {
     public gameOver() {
         window.parent.postMessage({ type: 'game-end' }, '*');
 
+        // Stop future throws:
+        clearTimeout(this.activeTimeout);
         this.playerGroup.children.each(child => child.removeAllListeners());
 
+        // Draw game over screen:
         this.add.rectangle(this.sys.canvas.width / 2, this.sys.canvas.height / 2, this.sys.canvas.width, this.sys.canvas.height, 0xdddddd, 0.5);
         this.add.text(this.sys.canvas.width / 2, this.sys.canvas.height / 2, 'Game Over', textStyle).setOrigin(0.5);
     }
@@ -132,12 +138,16 @@ export class CyberballScene extends Phaser.Scene {
     // Mechanics:
 
     public throwBall(thrower: Phaser.GameObjects.Sprite, receiver: Phaser.GameObjects.Sprite) {
-        // TODO: Post wait timers
+        console.log(`waited ${Date.now() - this.lastTime}`);
+
         window.parent.postMessage({
             type: 'throw',
             thrower: thrower.getData('settings').name,
-            receiver: receiver.getData('settings').name
+            receiver: receiver.getData('settings').name,
+            wait: Date.now() - this.lastTime
         }, '*');
+
+        this.lastTime = Date.now();
 
         // Update trackers:
 
@@ -185,14 +195,14 @@ export class CyberballScene extends Phaser.Scene {
         } else {
             let settings = receiver.getData('settings') as CPUModel;
 
-            setTimeout(() => {
+            this.activeTimeout = setTimeout(() => {
                 receiver.play('active');
 
                 ballPosition = this.getActiveBallPosition(receiver);
                 this.ballSprite.x = ballPosition.x;
                 this.ballSprite.y = ballPosition.y;
 
-                setTimeout(() => {
+                this.activeTimeout = setTimeout(() => {
                     if (this.settings.useSchedule) {
                         // Skip self in schedule.
                         while(this.settings.schedule[this.scheduleIndex] === this.playerGroup.getChildren().indexOf(receiver))

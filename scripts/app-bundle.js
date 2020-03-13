@@ -432,6 +432,7 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
             _this.ballHeld = true;
             _this.throwCount = 0;
             _this.scheduleIndex = 0;
+            _this.lastTime = Date.now();
             _this.settings = settings;
             return _this;
         }
@@ -506,16 +507,20 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
         };
         CyberballScene.prototype.gameOver = function () {
             window.parent.postMessage({ type: 'game-end' }, '*');
+            clearTimeout(this.activeTimeout);
             this.playerGroup.children.each(function (child) { return child.removeAllListeners(); });
             this.add.rectangle(this.sys.canvas.width / 2, this.sys.canvas.height / 2, this.sys.canvas.width, this.sys.canvas.height, 0xdddddd, 0.5);
             this.add.text(this.sys.canvas.width / 2, this.sys.canvas.height / 2, 'Game Over', textStyle).setOrigin(0.5);
         };
         CyberballScene.prototype.throwBall = function (thrower, receiver) {
+            console.log("waited " + (Date.now() - this.lastTime));
             window.parent.postMessage({
                 type: 'throw',
                 thrower: thrower.getData('settings').name,
-                receiver: receiver.getData('settings').name
+                receiver: receiver.getData('settings').name,
+                wait: Date.now() - this.lastTime
             }, '*');
+            this.lastTime = Date.now();
             this.playerHasBall = this.ballHeld = false;
             this.throwTarget = receiver;
             this.throwCount++;
@@ -540,12 +545,12 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
             }
             else {
                 var settings_1 = receiver.getData('settings');
-                setTimeout(function () {
+                this.activeTimeout = setTimeout(function () {
                     receiver.play('active');
                     ballPosition = _this.getActiveBallPosition(receiver);
                     _this.ballSprite.x = ballPosition.x;
                     _this.ballSprite.y = ballPosition.y;
-                    setTimeout(function () {
+                    _this.activeTimeout = setTimeout(function () {
                         if (_this.settings.useSchedule) {
                             while (_this.settings.schedule[_this.scheduleIndex] === _this.playerGroup.getChildren().indexOf(receiver))
                                 _this.scheduleIndex++;
