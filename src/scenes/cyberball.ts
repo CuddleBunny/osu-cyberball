@@ -172,6 +172,10 @@ export class CyberballScene extends Phaser.Scene {
 
         this.ballHeld = true;
 
+        // Player animation:
+
+        receiver.play('catch');
+
         // The game ends at the end of the schedule or when reaching the throw count.
         if (
             (this.settings.useSchedule && this.scheduleIndex === this.settings.schedule.length) ||
@@ -179,11 +183,8 @@ export class CyberballScene extends Phaser.Scene {
             (!this.settings.useSchedule && this.throwCount >= this.settings.throwCount)
         ) {
             this.gameOver();
+            return;
         }
-
-        // Player animation:
-
-        receiver.play('catch');
 
         // Ball physics:
 
