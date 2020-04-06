@@ -532,12 +532,13 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
         CyberballScene.prototype.catchBall = function (receiver) {
             var _this = this;
             this.ballHeld = true;
+            receiver.play('catch');
             if ((this.settings.useSchedule && this.scheduleIndex === this.settings.schedule.length) ||
                 (this.settings.useSchedule && this.settings.scheduleHonorsThrowCount && this.throwCount >= this.settings.throwCount) ||
                 (!this.settings.useSchedule && this.throwCount >= this.settings.throwCount)) {
                 this.gameOver();
+                return;
             }
-            receiver.play('catch');
             var ballPosition = this.getCaughtBallPosition(receiver);
             this.ballSprite.body.reset(ballPosition.x, ballPosition.y);
             if (receiver === this.playerSprite) {
