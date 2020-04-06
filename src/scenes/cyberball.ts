@@ -176,7 +176,13 @@ export class CyberballScene extends Phaser.Scene {
 
         receiver.play('catch');
 
+        // Ball physics:
+
+        let ballPosition = this.getCaughtBallPosition(receiver);
+        (this.ballSprite.body as Phaser.Physics.Arcade.Body).reset(ballPosition.x, ballPosition.y);
+
         // The game ends at the end of the schedule or when reaching the throw count.
+
         if (
             (this.settings.useSchedule && this.scheduleIndex === this.settings.schedule.length) ||
             (this.settings.useSchedule && this.settings.scheduleHonorsThrowCount && this.throwCount >= this.settings.throwCount) ||
@@ -186,10 +192,7 @@ export class CyberballScene extends Phaser.Scene {
             return;
         }
 
-        // Ball physics:
-
-        let ballPosition = this.getCaughtBallPosition(receiver);
-        (this.ballSprite.body as Phaser.Physics.Arcade.Body).reset(ballPosition.x, ballPosition.y);
+        // Prepare for next throw:
 
         if (receiver === this.playerSprite) {
             this.playerHasBall = true;
