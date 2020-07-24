@@ -473,8 +473,13 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
                 cpuSprite.setData('settings', this_1.settings.computerPlayers[i]);
                 cpuSprite.setInteractive();
                 cpuSprite.on('pointerdown', function (e) {
-                    if (_this.playerHasBall)
+                    if (_this.playerHasBall) {
+                        _this.playerSprite.flipX = _this.input.x < _this.playerSprite.x;
+                        var ballPosition_1 = _this.getActiveBallPosition(_this.playerSprite);
+                        _this.ballSprite.x = ballPosition_1.x;
+                        _this.ballSprite.y = ballPosition_1.y;
                         _this.throwBall(_this.playerSprite, cpuSprite);
+                    }
                 });
             };
             var this_1 = this;
@@ -513,7 +518,6 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
             this.add.text(this.sys.canvas.width / 2, this.sys.canvas.height / 2, 'Game Over', textStyle).setOrigin(0.5);
         };
         CyberballScene.prototype.throwBall = function (thrower, receiver) {
-            console.log("waited " + (Date.now() - this.lastTime));
             window.parent.postMessage({
                 type: 'throw',
                 thrower: thrower.getData('settings').name,
@@ -576,7 +580,12 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
         };
         CyberballScene.prototype.getCPUPosition = function (i) {
             var padding = 75;
-            return new phaser_1.default.Geom.Point(((this.sys.canvas.width - (padding * 2)) / (this.settings.computerPlayers.length - 1)) * i + padding, i === 0 || i === this.settings.computerPlayers.length - 1 ? this.sys.canvas.height / 2 : padding);
+            if (this.settings.computerPlayers.length === 1) {
+                return new phaser_1.default.Geom.Point(this.sys.canvas.width / 2, padding);
+            }
+            return new phaser_1.default.Geom.Point(((this.sys.canvas.width - (padding * 2)) / (this.settings.computerPlayers.length - 1)) * i + padding, i === 0 || i === this.settings.computerPlayers.length - 1
+                ? this.sys.canvas.height / 2
+                : padding);
         };
         CyberballScene.prototype.getPlayerPosition = function () {
             var padding = 75;

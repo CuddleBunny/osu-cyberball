@@ -249,10 +249,20 @@ export class CyberballScene extends Phaser.Scene {
         // TODO: Increase padding when portaits are enabled.
         let padding = 75;
 
+        if(this.settings.computerPlayers.length === 1) {
+            return new Phaser.Geom.Point(
+                this.sys.canvas.width / 2,
+                padding
+            );
+        }
+
         return new Phaser.Geom.Point(
             // Evenly divide the width of the screen by the number of players.
             ((this.sys.canvas.width - (padding * 2)) / (this.settings.computerPlayers.length - 1)) * i + padding,
-            i === 0 || i === this.settings.computerPlayers.length - 1 ? this.sys.canvas.height / 2 : padding
+            // First and last player are closer in the middle, others stand along the edge.
+            i === 0 || i === this.settings.computerPlayers.length - 1
+                ? this.sys.canvas.height / 2
+                : padding
         );
     }
 
