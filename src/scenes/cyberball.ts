@@ -89,8 +89,16 @@ export class CyberballScene extends Phaser.Scene {
 
             cpuSprite.setInteractive();
             cpuSprite.on('pointerdown', (e) => {
-                if (this.playerHasBall)
+                if (this.playerHasBall) {
+                    // Ensure player and ball are facing the correct way on touch devices:
+                    this.playerSprite.flipX = this.input.x < this.playerSprite.x;
+
+                    let ballPosition = this.getActiveBallPosition(this.playerSprite);
+                    this.ballSprite.x = ballPosition.x;
+                    this.ballSprite.y = ballPosition.y;
+
                     this.throwBall(this.playerSprite, cpuSprite);
+                }
             });
         }
 
@@ -138,8 +146,6 @@ export class CyberballScene extends Phaser.Scene {
     // Mechanics:
 
     public throwBall(thrower: Phaser.GameObjects.Sprite, receiver: Phaser.GameObjects.Sprite) {
-        console.log(`waited ${Date.now() - this.lastTime}`);
-
         window.parent.postMessage({
             type: 'throw',
             thrower: thrower.getData('settings').name,
