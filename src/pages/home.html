@@ -51,6 +51,11 @@
                 <input type="text" value.bind="settings.player.name" />
             </div>
 
+            <div class="input">
+                <label for="player.tint">Tint Color</label>
+                <input type="color" value.bind="settings.player.tint" />
+            </div>
+
             <h2>
                 CPUs
                 <button click.delegate="addCPU()">+ Add CPU</button>
@@ -61,6 +66,11 @@
                 <div class="input">
                     <label>Name</label>
                     <input type="text" value.bind="cpu.name" />
+                </div>
+
+                <div class="input">
+                    <label>Tint Color</label>
+                    <input type="color" value.bind="cpu.tint" />
                 </div>
 
                 <div class="input">
@@ -105,6 +115,11 @@
             <div class="input">
                 <label>Ball Speed</label>
                 <input type="number" value.bind="settings.ballSpeed | integer" />
+            </div>
+
+            <div class="input">
+                <label for="ball.tint">Ball Tint Color</label>
+                <input type="color" value.bind="settings.ballTint" />
             </div>
 
             <div class="input">

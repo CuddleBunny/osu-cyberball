@@ -18,6 +18,7 @@ export class SettingsModel {
     // Graphics
     baseUrl: string = './assets';
     ballSprite: string = 'ball.png';
+    ballTint?: string;
 
     // Misc
     chatEnabled: boolean = false;

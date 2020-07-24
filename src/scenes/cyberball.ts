@@ -74,6 +74,9 @@ export class CyberballScene extends Phaser.Scene {
         this.playerSprite = this.playerGroup.create(playerPosition.x, playerPosition.y, 'player', 'active/1.png');
         this.playerSprite.setData('settings', this.settings.player);
 
+        if(this.settings.player.tint)
+            this.playerSprite.setTint(parseInt(this.settings.player.tint.substr(1), 16));
+
         this.add.text(playerPosition.x, playerPosition.y + this.playerSprite.height / 2 + 10, this.settings.player.name, textStyle).setOrigin(0.5);
 
         // CPU:
@@ -86,6 +89,9 @@ export class CyberballScene extends Phaser.Scene {
 
             cpuSprite.flipX = cpuPosition.x > playerPosition.x;
             cpuSprite.setData('settings', this.settings.computerPlayers[i]);
+
+            if(this.settings.computerPlayers[i].tint)
+                cpuSprite.setTint(parseInt(this.settings.computerPlayers[i].tint.substr(1), 16));
 
             cpuSprite.setInteractive();
             cpuSprite.on('pointerdown', (e) => {
@@ -106,6 +112,9 @@ export class CyberballScene extends Phaser.Scene {
 
         let ballPosition = this.getActiveBallPosition(this.playerSprite);
         this.ballSprite = this.physics.add.sprite(ballPosition.x, ballPosition.y, 'ball');
+
+        if(this.settings.ballTint)
+            this.ballSprite.setTint(parseInt(this.settings.ballTint.substr(1), 16));
 
         this.physics.add.overlap(this.ballSprite, this.playerGroup, (_b, receiver) => {
             if (!this.ballHeld && receiver === this.throwTarget)
