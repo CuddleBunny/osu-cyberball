@@ -170,7 +170,7 @@ export class CyberballScene extends Phaser.Scene {
         // Ball physics:
 
         let ballTargetPosition = this.getCaughtBallPosition(receiver);
-        this.physics.moveTo(this.ballSprite, ballTargetPosition.x, ballTargetPosition.y, 500);
+        this.physics.moveTo(this.ballSprite, ballTargetPosition.x, ballTargetPosition.y, this.settings.ballSpeed);
     }
 
     public catchBall(receiver: Phaser.GameObjects.Sprite) {

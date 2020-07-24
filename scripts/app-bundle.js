@@ -531,7 +531,7 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
             thrower.play('throw');
             thrower.anims.currentAnim.once('complete', function () { return thrower.play('idle'); });
             var ballTargetPosition = this.getCaughtBallPosition(receiver);
-            this.physics.moveTo(this.ballSprite, ballTargetPosition.x, ballTargetPosition.y, 500);
+            this.physics.moveTo(this.ballSprite, ballTargetPosition.x, ballTargetPosition.y, this.settings.ballSpeed);
         };
         CyberballScene.prototype.catchBall = function (receiver) {
             var _this = this;
