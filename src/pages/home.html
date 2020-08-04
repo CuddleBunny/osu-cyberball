@@ -137,6 +137,11 @@
                 <input type="checkbox" checked.bind="settings.scheduleHonorsThrowCount" />
             </div>
 
+            <div class="input">
+                <label>Game Over Text</label>
+                <input type="text" value.bind="settings.gameOverText" />
+            </div>
+
             <button click.delegate="saveSettings()">Save</button>
         </div>
 

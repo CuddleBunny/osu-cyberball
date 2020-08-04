@@ -23,6 +23,8 @@ export class SettingsModel {
     // Misc
     chatEnabled: boolean = false;
 
+    gameOverText: string = "Game Over";
+
     constructor(init?: Partial<SettingsModel>) {
         Object.assign(this, init);
     }

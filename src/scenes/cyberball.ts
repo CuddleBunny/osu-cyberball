@@ -149,7 +149,7 @@ export class CyberballScene extends Phaser.Scene {
 
         // Draw game over screen:
         this.add.rectangle(this.sys.canvas.width / 2, this.sys.canvas.height / 2, this.sys.canvas.width, this.sys.canvas.height, 0xdddddd, 0.5);
-        this.add.text(this.sys.canvas.width / 2, this.sys.canvas.height / 2, 'Game Over', textStyle).setOrigin(0.5);
+        this.add.text(this.sys.canvas.width / 2, this.sys.canvas.height / 2, this.settings.gameOverText, textStyle).setOrigin(0.5);
     }
 
     // Mechanics:
