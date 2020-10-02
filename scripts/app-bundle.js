@@ -131,10 +131,19 @@ define('models/settings-model',["require", "exports", "./player-model", "./cpu-m
             ];
             this.baseUrl = './assets';
             this.ballSprite = 'ball.png';
+            this.portraitHeight = 75;
+            this.portraitPadding = 10;
             this.chatEnabled = false;
             this.gameOverText = "Game Over";
             Object.assign(this, init);
         }
+        Object.defineProperty(SettingsModel.prototype, "hasPortraits", {
+            get: function () {
+                return this.player.portrait || this.computerPlayers.some(function (cpu) { return cpu.portrait; });
+            },
+            enumerable: true,
+            configurable: true
+        });
         return SettingsModel;
     }());
     exports.SettingsModel = SettingsModel;
@@ -174,6 +183,9 @@ define('pages/game',["require", "exports", "./../scenes/cyberball", "./../models
             if ('playerName' in params) {
                 this.settings.player.name = params.playerName;
             }
+            if (this.settings.hasPortraits) {
+                this.gameHeight += this.settings.portraitHeight * 2 + this.settings.portraitPadding * 4;
+            }
         };
         GameViewModel.prototype.bind = function () {
             this.gameConfig = {
@@ -199,7 +211,7 @@ define('pages/game',["require", "exports", "./../scenes/cyberball", "./../models
 });
 ;
 define('text!pages/game.css',[],function(){return "canvas {\n    max-width: 100%;\n}\n\n.chat-log {\n    border: 1px solid black;\n    border-bottom: 0;\n    height: 100px;\n    overflow-y: auto;\n}\n\n.chat-input {\n    display: flex;\n}\n\n.chat-input input {\n    flex: 1;\n}\n";});;
-define('text!pages/game.html',[],function(){return "<template>\n    <require from=\"./game.css\"></require>\n\n    <phaser-game config.bind=\"gameConfig\"></phaser-game>\n\n    <div if.bind=\"settings.chatEnabled\" class=\"chat\" css=\"width: ${gameWidth}px\">\n        <div class=\"chat-log\">\n            <div repeat.for=\"message of chatMessages\">\n                <strong>${message.sender}</strong>: <span>${message.text}</span>\n            </div>\n        </div>\n\n        <form class=\"chat-input\" submit.delegate=\"sendMessage()\">\n            <input value.bind=\"chatMessage\" />\n            <button type=\"submit\">Send</button>\n        </form>\n    </div>\n</template>\n";});;
+define('text!pages/game.html',[],function(){return "<template>\n    <require from=\"./game.css\"></require>\n\n    <div style=\"position: relative\">\n        <phaser-game ref.bind=\"game\" config.bind=\"gameConfig\"></phaser-game>\n    </div>\n\n    <div if.bind=\"settings.chatEnabled\" class=\"chat\" css=\"width: ${gameWidth}px\">\n        <div class=\"chat-log\">\n            <div repeat.for=\"message of chatMessages\">\n                <strong>${message.sender}</strong>: <span>${message.text}</span>\n            </div>\n        </div>\n\n        <form class=\"chat-input\" submit.delegate=\"sendMessage()\">\n            <input value.bind=\"chatMessage\" />\n            <button type=\"submit\">Send</button>\n        </form>\n    </div>\n</template>\n";});;
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -268,7 +280,7 @@ define('pages/home',["require", "exports", "aurelia-templating-resources", "aure
     exports.HomeViewModel = HomeViewModel;
 });
 ;
-define('text!pages/home.html',[],function(){return "<template>\n    <require from=\"resources/value-converters/json-value-converter\"></require>\n    <require from=\"resources/value-converters/integer-value-converter\"></require>\n    <require from=\"resources/value-converters/integer-array-value-converter\"></require>\n\n    <style>\n        body {\n            background: #111;\n            color: #eee;\n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n        }\n\n        .input {\n            display: flex;\n            margin-bottom: 5px;\n        }\n\n        .input label {\n            width: 180px;\n        }\n\n        .input label + * {\n            box-sizing: border-box;\n            max-width: 300px;\n        }\n\n        .input input[type=text], .input input[type=number], textarea {\n            flex: 1 1 100%;\n            min-width: 0;\n            width: auto;\n        }\n\n        .input > div {\n            display: flex;\n        }\n\n        pre {\n            max-width: 100%;\n            overflow-x: auto;\n        }\n    </style>\n\n    <div style=\"display: flex;\">\n        <div style=\"margin-right: 20px;\">\n            <h1>Cyberball Configuration Builder</h1>\n\n            <h2>Player</h2>\n\n            <div class=\"input\">\n                <label for=\"player.name\">Name</label>\n                <input type=\"text\" value.bind=\"settings.player.name\" />\n            </div>\n\n            <div class=\"input\">\n                <label for=\"player.tint\">Tint Color</label>\n                <input type=\"color\" value.bind=\"settings.player.tint\" />\n            </div>\n\n            <h2>\n                CPUs\n                <button click.delegate=\"addCPU()\">+ Add CPU</button>\n                <button click.delegate=\"removeCPU()\">- Remove CPU</button>\n            </h2>\n\n            <div repeat.for=\"cpu of settings.computerPlayers\">\n                <div class=\"input\">\n                    <label>Name</label>\n                    <input type=\"text\" value.bind=\"cpu.name\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Tint Color</label>\n                    <input type=\"color\" value.bind=\"cpu.tint\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Throw Delay</label>\n                    <input type=\"number\" value.bind=\"cpu.throwDelay | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Throw Delay Variance</label>\n                    <input type=\"number\" value.bind=\"cpu.throwDelayVariance | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Catch Delay</label>\n                    <input type=\"number\" value.bind=\"cpu.catchDelay | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Catch Delay Variance</label>\n                    <input type=\"number\" value.bind=\"cpu.catchDelayVariance | integer\" />\n                </div>\n\n\n                <div class=\"input\">\n                    <label>Target Preference</label>\n\n                    <div>\n                        <input repeat.for=\"target of cpu.targetPreference\" type=\"number\" value.bind=\"cpu.targetPreference[$index] | integer\" />\n                    </div>\n                </div>\n\n                <hr />\n            </div>\n\n            <h2>Gameplay</h2>\n\n            <div class=\"input\">\n                <label>Throw Count</label>\n                <input type=\"number\" value.bind=\"settings.throwCount | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Ball Speed</label>\n                <input type=\"number\" value.bind=\"settings.ballSpeed | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label for=\"ball.tint\">Ball Tint Color</label>\n                <input type=\"color\" value.bind=\"settings.ballTint\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Use Schedule</label>\n                <input type=\"checkbox\" checked.bind=\"settings.useSchedule\" />\n            </div>\n\n            <div class=\"input\" if.bind=\"settings.useSchedule\">\n                <label>Schedule</label>\n                <textarea value.bind=\"settings.schedule | integerArray & updateTrigger:'blur'\"></textarea>\n            </div>\n\n            <div class=\"input\">\n                <label>Schedule Honors Throw Count</label>\n                <input type=\"checkbox\" checked.bind=\"settings.scheduleHonorsThrowCount\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Game Over Text</label>\n                <input type=\"text\" value.bind=\"settings.gameOverText\" />\n            </div>\n\n            <button click.delegate=\"saveSettings()\">Save</button>\n        </div>\n\n        <div style=\"overflow-y: auto;\">\n            <pre>${settings | json & signal: 'save-settings'}</pre>\n        </div>\n    </div>\n\n    <div>\n        <h1>\n            Code\n            <button id=\"copy\" data-clipboard-target=\"#code\">&#10697; Copy</button>\n            <button click.delegate=\"testGame()\">&#129514; Test</button>\n        </h1>\n        <pre id=\"code\">&lt;iframe id=\"cyberball\" width=\"100%\" height=\"580\" src=\"${url}\"&gt;&lt;/iframe&gt;</pre>\n    </div>\n</template>\n";});;
+define('text!pages/home.html',[],function(){return "<template>\n    <require from=\"resources/value-converters/json-value-converter\"></require>\n    <require from=\"resources/value-converters/integer-value-converter\"></require>\n    <require from=\"resources/value-converters/integer-array-value-converter\"></require>\n\n    <style>\n        body {\n            background: #111;\n            color: #eee;\n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n        }\n\n        .input {\n            display: flex;\n            margin-bottom: 5px;\n        }\n\n        .input label {\n            width: 180px;\n        }\n\n        .input label + * {\n            box-sizing: border-box;\n            max-width: 300px;\n        }\n\n        .input input[type=text], .input input[type=number], textarea {\n            flex: 1 1 100%;\n            min-width: 0;\n            width: auto;\n        }\n\n        .input > div {\n            display: flex;\n        }\n\n        pre {\n            max-width: 100%;\n            overflow-x: auto;\n        }\n    </style>\n\n    <div style=\"display: flex;\">\n        <div style=\"margin-right: 20px;\">\n            <h1>Cyberball Configuration Builder</h1>\n\n            <h2>Player</h2>\n\n            <div class=\"input\">\n                <label>Name</label>\n                <input type=\"text\" value.bind=\"settings.player.name\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Tint Color</label>\n                <input type=\"color\" value.bind=\"settings.player.tint\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Portrait</label>\n                <input type=\"text\" value.bind=\"settings.player.portrait\" />\n            </div>\n\n            <h2>\n                CPUs\n                <button click.delegate=\"addCPU()\">+ Add CPU</button>\n                <button click.delegate=\"removeCPU()\">- Remove CPU</button>\n            </h2>\n\n            <div repeat.for=\"cpu of settings.computerPlayers\">\n                <div class=\"input\">\n                    <label>Name</label>\n                    <input type=\"text\" value.bind=\"cpu.name\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Tint Color</label>\n                    <input type=\"color\" value.bind=\"cpu.tint\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Portrait</label>\n                    <input type=\"text\" value.bind=\"cpu.portrait\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Throw Delay</label>\n                    <input type=\"number\" value.bind=\"cpu.throwDelay | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Throw Delay Variance</label>\n                    <input type=\"number\" value.bind=\"cpu.throwDelayVariance | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Catch Delay</label>\n                    <input type=\"number\" value.bind=\"cpu.catchDelay | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Catch Delay Variance</label>\n                    <input type=\"number\" value.bind=\"cpu.catchDelayVariance | integer\" />\n                </div>\n\n\n                <div class=\"input\">\n                    <label>Target Preference</label>\n\n                    <div>\n                        <input repeat.for=\"target of cpu.targetPreference\" type=\"number\" value.bind=\"cpu.targetPreference[$index] | integer\" />\n                    </div>\n                </div>\n\n                <hr />\n            </div>\n\n            <h2>Gameplay</h2>\n\n            <div class=\"input\">\n                <label>Throw Count</label>\n                <input type=\"number\" value.bind=\"settings.throwCount | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Ball Speed</label>\n                <input type=\"number\" value.bind=\"settings.ballSpeed | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Ball Tint Color</label>\n                <input type=\"color\" value.bind=\"settings.ballTint\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Portrait Height</label>\n                <input type=\"number\" value.bind=\"settings.portraitHeight\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Use Schedule</label>\n                <input type=\"checkbox\" checked.bind=\"settings.useSchedule\" />\n            </div>\n\n            <div class=\"input\" if.bind=\"settings.useSchedule\">\n                <label>Schedule</label>\n                <textarea value.bind=\"settings.schedule | integerArray & updateTrigger:'blur'\"></textarea>\n            </div>\n\n            <div class=\"input\">\n                <label>Schedule Honors Throw Count</label>\n                <input type=\"checkbox\" checked.bind=\"settings.scheduleHonorsThrowCount\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Game Over Text</label>\n                <input type=\"text\" value.bind=\"settings.gameOverText\" />\n            </div>\n\n            <button click.delegate=\"saveSettings()\">Save</button>\n        </div>\n\n        <div style=\"overflow-y: auto;\">\n            <pre>${settings | json & signal: 'save-settings'}</pre>\n        </div>\n    </div>\n\n    <div>\n        <h1>\n            Code\n            <button id=\"copy\" data-clipboard-target=\"#code\">&#10697; Copy</button>\n            <button click.delegate=\"testGame()\">&#129514; Test</button>\n        </h1>\n        <pre id=\"code\">&lt;iframe id=\"cyberball\" width=\"100%\" height=\"580\" src=\"${url}\"&gt;&lt;/iframe&gt;</pre>\n    </div>\n</template>\n";});;
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -438,8 +450,16 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
             return _this;
         }
         CyberballScene.prototype.preload = function () {
+            var _this = this;
+            this.load.crossOrigin = 'anonymous';
             this.load.image('ball', this.settings.baseUrl + "/" + this.settings.ballSprite);
             this.load.multiatlas('player', "./assets/player.json", 'assets');
+            if (this.settings.player.portrait)
+                this.load.image('playerPortrait', 'https://cors-anywhere.herokuapp.com/' + this.settings.player.portrait);
+            this.settings.computerPlayers.forEach(function (cpu, i) {
+                if (cpu.portrait)
+                    _this.load.image('cpuPortrait' + i, 'https://cors-anywhere.herokuapp.com/' + cpu.portrait);
+            });
         };
         CyberballScene.prototype.create = function () {
             var _this = this;
@@ -468,10 +488,18 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
             if (this.settings.player.tint)
                 this.playerSprite.setTint(parseInt(this.settings.player.tint.substr(1), 16));
             this.add.text(playerPosition.x, playerPosition.y + this.playerSprite.height / 2 + 10, this.settings.player.name, textStyle).setOrigin(0.5);
+            if (this.settings.player.portrait) {
+                var portraitPosition = this.getPlayerPortraitPosition();
+                this.add.image(portraitPosition.x, portraitPosition.y, 'playerPortrait');
+            }
             var _loop_1 = function (i) {
                 var cpuPosition = this_1.getCPUPosition(i);
                 var cpuSprite = this_1.playerGroup.create(cpuPosition.x, cpuPosition.y, 'player', 'idle/1.png');
                 this_1.add.text(cpuPosition.x, cpuPosition.y + cpuSprite.height / 2 + 10, this_1.settings.computerPlayers[i].name, textStyle).setOrigin(0.5);
+                if (this_1.settings.computerPlayers[i].portrait) {
+                    portraitPosition = this_1.getCPUPortraitPosition(i, cpuSprite);
+                    this_1.add.image(portraitPosition.x, portraitPosition.y, 'cpuPortrait' + i);
+                }
                 cpuSprite.flipX = cpuPosition.x > playerPosition.x;
                 cpuSprite.setData('settings', this_1.settings.computerPlayers[i]);
                 if (this_1.settings.computerPlayers[i].tint)
@@ -487,7 +515,7 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
                     }
                 });
             };
-            var this_1 = this;
+            var this_1 = this, portraitPosition;
             for (var i = 0; i < this.settings.computerPlayers.length; i++) {
                 _loop_1(i);
             }
@@ -587,16 +615,27 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
         };
         CyberballScene.prototype.getCPUPosition = function (i) {
             var padding = 75;
+            var extraPadding = this.settings.hasPortraits ? this.settings.portraitHeight + this.settings.portraitPadding * 2 : 0;
             if (this.settings.computerPlayers.length === 1) {
-                return new phaser_1.default.Geom.Point(this.sys.canvas.width / 2, padding);
+                return new phaser_1.default.Geom.Point(this.sys.canvas.width / 2, padding + extraPadding);
             }
             return new phaser_1.default.Geom.Point(((this.sys.canvas.width - (padding * 2)) / (this.settings.computerPlayers.length - 1)) * i + padding, i === 0 || i === this.settings.computerPlayers.length - 1
-                ? this.sys.canvas.height / 2
-                : padding);
+                ? (this.sys.canvas.height / 2)
+                : padding + extraPadding);
+        };
+        CyberballScene.prototype.getCPUPortraitPosition = function (i, sprite) {
+            var position = this.getCPUPosition(i);
+            return new phaser_1.default.Geom.Point(position.x, position.y - this.settings.portraitHeight + this.settings.portraitPadding * 2 - sprite.height / 2);
         };
         CyberballScene.prototype.getPlayerPosition = function () {
             var padding = 75;
+            if (this.settings.hasPortraits)
+                padding += this.settings.portraitHeight + this.settings.portraitPadding * 2;
             return new phaser_1.default.Geom.Point(this.sys.canvas.width / 2, this.sys.canvas.height - padding);
+        };
+        CyberballScene.prototype.getPlayerPortraitPosition = function () {
+            var position = this.getPlayerPosition();
+            return new phaser_1.default.Geom.Point(position.x, position.y + this.settings.portraitHeight + this.settings.portraitPadding * 2 + 20);
         };
         CyberballScene.prototype.getCaughtBallPosition = function (target) {
             return new phaser_1.default.Geom.Point(target.x + (target.flipX ? -50 : 50), target.y - 15);

@@ -35,9 +35,19 @@ export class CyberballScene extends Phaser.Scene {
     }
 
     public preload() {
+        this.load.crossOrigin = 'anonymous';
+
         // TODO: Load from settings.
         this.load.image('ball', `${this.settings.baseUrl}/${this.settings.ballSprite}`);
         this.load.multiatlas('player', `./assets/player.json`, 'assets');
+
+        if(this.settings.player.portrait)
+            this.load.image('playerPortrait', 'https://cors-anywhere.herokuapp.com/' + this.settings.player.portrait);
+
+        this.settings.computerPlayers.forEach((cpu, i) => {
+            if(cpu.portrait)
+                this.load.image('cpuPortrait' + i, 'https://cors-anywhere.herokuapp.com/' + cpu.portrait);
+        });
     }
 
     public create() {
@@ -79,6 +89,11 @@ export class CyberballScene extends Phaser.Scene {
 
         this.add.text(playerPosition.x, playerPosition.y + this.playerSprite.height / 2 + 10, this.settings.player.name, textStyle).setOrigin(0.5);
 
+        if(this.settings.player.portrait) {
+            var portraitPosition = this.getPlayerPortraitPosition();
+            this.add.image(portraitPosition.x, portraitPosition.y, 'playerPortrait');
+        }
+
         // CPU:
 
         for (let i = 0; i < this.settings.computerPlayers.length; i++) {
@@ -86,6 +101,11 @@ export class CyberballScene extends Phaser.Scene {
             let cpuSprite: Phaser.GameObjects.Sprite = this.playerGroup.create(cpuPosition.x, cpuPosition.y, 'player', 'idle/1.png');
 
             this.add.text(cpuPosition.x, cpuPosition.y + cpuSprite.height / 2 + 10, this.settings.computerPlayers[i].name, textStyle).setOrigin(0.5);
+
+            if(this.settings.computerPlayers[i].portrait) {
+                var portraitPosition = this.getCPUPortraitPosition(i, cpuSprite);
+                this.add.image(portraitPosition.x, portraitPosition.y, 'cpuPortrait' + i);
+            }
 
             cpuSprite.flipX = cpuPosition.x > playerPosition.x;
             cpuSprite.setData('settings', this.settings.computerPlayers[i]);
@@ -254,14 +274,15 @@ export class CyberballScene extends Phaser.Scene {
 
     // Helpers:
 
-    getCPUPosition(i: number) {
+    getCPUPosition(i: number): Phaser.Geom.Point {
         // TODO: Increase padding when portaits are enabled.
         let padding = 75;
+        let extraPadding = this.settings.hasPortraits ? this.settings.portraitHeight + this.settings.portraitPadding * 2 : 0;
 
         if(this.settings.computerPlayers.length === 1) {
             return new Phaser.Geom.Point(
                 this.sys.canvas.width / 2,
-                padding
+                padding + extraPadding
             );
         }
 
@@ -270,17 +291,38 @@ export class CyberballScene extends Phaser.Scene {
             ((this.sys.canvas.width - (padding * 2)) / (this.settings.computerPlayers.length - 1)) * i + padding,
             // First and last player are closer in the middle, others stand along the edge.
             i === 0 || i === this.settings.computerPlayers.length - 1
-                ? this.sys.canvas.height / 2
-                : padding
+                ? (this.sys.canvas.height / 2)
+                : padding + extraPadding
         );
     }
 
-    getPlayerPosition() {
+    getCPUPortraitPosition(i: number, sprite: Phaser.GameObjects.Sprite): Phaser.Geom.Point  {
+        let position = this.getCPUPosition(i);
+
+        return new Phaser.Geom.Point(
+            position.x,
+            position.y - this.settings.portraitHeight + this.settings.portraitPadding * 2 - sprite.height / 2
+        );
+    }
+
+    getPlayerPosition(): Phaser.Geom.Point {
         let padding = 75;
+
+        if(this.settings.hasPortraits)
+            padding += this.settings.portraitHeight + this.settings.portraitPadding * 2;
 
         return new Phaser.Geom.Point(
             this.sys.canvas.width / 2,
             this.sys.canvas.height - padding
+        );
+    }
+
+    getPlayerPortraitPosition(): Phaser.Geom.Point {
+        var position = this.getPlayerPosition();
+
+        return new Phaser.Geom.Point(
+            position.x,
+            position.y + this.settings.portraitHeight + this.settings.portraitPadding * 2 + 20
         );
     }
 

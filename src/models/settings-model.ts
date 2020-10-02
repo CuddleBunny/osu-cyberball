@@ -1,5 +1,6 @@
 import { PlayerModel } from './player-model';
 import { CPUModel } from './cpu-model';
+import { stringify } from 'querystring';
 
 export class SettingsModel {
     player: PlayerModel = new PlayerModel();
@@ -17,8 +18,16 @@ export class SettingsModel {
 
     // Graphics
     baseUrl: string = './assets';
+
     ballSprite: string = 'ball.png';
     ballTint?: string;
+
+    portraitHeight: number = 75;
+    portraitPadding: number = 10;
+
+    get hasPortraits(): boolean | string {
+        return this.player.portrait || this.computerPlayers.some(cpu => cpu.portrait);
+    }
 
     // Misc
     chatEnabled: boolean = false;

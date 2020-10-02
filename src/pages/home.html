@@ -47,13 +47,18 @@
             <h2>Player</h2>
 
             <div class="input">
-                <label for="player.name">Name</label>
+                <label>Name</label>
                 <input type="text" value.bind="settings.player.name" />
             </div>
 
             <div class="input">
-                <label for="player.tint">Tint Color</label>
+                <label>Tint Color</label>
                 <input type="color" value.bind="settings.player.tint" />
+            </div>
+
+            <div class="input">
+                <label>Portrait</label>
+                <input type="text" value.bind="settings.player.portrait" />
             </div>
 
             <h2>
@@ -71,6 +76,11 @@
                 <div class="input">
                     <label>Tint Color</label>
                     <input type="color" value.bind="cpu.tint" />
+                </div>
+
+                <div class="input">
+                    <label>Portrait</label>
+                    <input type="text" value.bind="cpu.portrait" />
                 </div>
 
                 <div class="input">
@@ -118,8 +128,13 @@
             </div>
 
             <div class="input">
-                <label for="ball.tint">Ball Tint Color</label>
+                <label>Ball Tint Color</label>
                 <input type="color" value.bind="settings.ballTint" />
+            </div>
+
+            <div class="input">
+                <label>Portrait Height</label>
+                <input type="number" value.bind="settings.portraitHeight" />
             </div>
 
             <div class="input">

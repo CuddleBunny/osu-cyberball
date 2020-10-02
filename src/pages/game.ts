@@ -1,6 +1,7 @@
 import { CyberballScene } from './../scenes/cyberball';
 import { defaultSettings, SettingsModel } from './../models/settings-model';
 import Phaser from 'phaser';
+import { PhaserGameCustomElement } from 'resources/phaser-game/phaser-game';
 
 //     // TODO: Use events to talk to Qualtrics?
 //     //setTimeout(() => { window.dispatchEvent(new CustomEvent('complete', { detail: { test: 'test' } }))}, 1000)
@@ -10,6 +11,8 @@ export class GameViewModel {
     settings: SettingsModel = defaultSettings;
 
     // Game:
+
+    game: PhaserGameCustomElement;
 
     gameWidth = 800;
     gameHeight = 460;
@@ -23,6 +26,10 @@ export class GameViewModel {
 
         if('playerName' in params) {
             this.settings.player.name = params.playerName;
+        }
+
+        if(this.settings.hasPortraits) {
+            this.gameHeight += this.settings.portraitHeight * 2 + this.settings.portraitPadding * 4;
         }
     }
 

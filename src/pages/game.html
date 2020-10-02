@@ -1,7 +1,9 @@
 <template>
     <require from="./game.css"></require>
 
-    <phaser-game config.bind="gameConfig"></phaser-game>
+    <div style="position: relative">
+        <phaser-game ref.bind="game" config.bind="gameConfig"></phaser-game>
+    </div>
 
     <div if.bind="settings.chatEnabled" class="chat" css="width: ${gameWidth}px">
         <div class="chat-log">
