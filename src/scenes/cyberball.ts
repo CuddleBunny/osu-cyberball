@@ -90,8 +90,10 @@ export class CyberballScene extends Phaser.Scene {
         this.add.text(playerPosition.x, playerPosition.y + this.playerSprite.height / 2 + 10, this.settings.player.name, textStyle).setOrigin(0.5);
 
         if(this.settings.player.portrait) {
-            var portraitPosition = this.getPlayerPortraitPosition();
-            this.add.image(portraitPosition.x, portraitPosition.y, 'playerPortrait');
+            var portraitPosition = this.getPlayerPortraitPosition(this.playerSprite);
+            var image = this.add.image(portraitPosition.x, portraitPosition.y, 'playerPortrait');
+
+            image.setScale(this.settings.portraitHeight / image.height);
         }
 
         // CPU:
@@ -104,7 +106,9 @@ export class CyberballScene extends Phaser.Scene {
 
             if(this.settings.computerPlayers[i].portrait) {
                 var portraitPosition = this.getCPUPortraitPosition(i, cpuSprite);
-                this.add.image(portraitPosition.x, portraitPosition.y, 'cpuPortrait' + i);
+                var image = this.add.image(portraitPosition.x, portraitPosition.y, 'cpuPortrait' + i);
+
+                image.setScale(this.settings.portraitHeight / image.height);
             }
 
             cpuSprite.flipX = cpuPosition.x > playerPosition.x;
@@ -317,12 +321,12 @@ export class CyberballScene extends Phaser.Scene {
         );
     }
 
-    getPlayerPortraitPosition(): Phaser.Geom.Point {
+    getPlayerPortraitPosition(sprite: Phaser.GameObjects.Sprite): Phaser.Geom.Point {
         var position = this.getPlayerPosition();
 
         return new Phaser.Geom.Point(
             position.x,
-            position.y + this.settings.portraitHeight + this.settings.portraitPadding * 2 + 20
+            position.y + this.settings.portraitHeight / 2 + this.settings.portraitPadding * 2 + sprite.height / 2 + 10
         );
     }
 
