@@ -40,9 +40,9 @@ export class SettingsModel {
 }
 
 export const defaultSettings = new SettingsModel({
-    player: {
+    player: new PlayerModel({
        name: 'Player 1'
-    },
+    }),
     computerPlayers: [
         new CPUModel({
             name: 'Player 2'
