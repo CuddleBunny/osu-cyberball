@@ -1,6 +1,7 @@
 define('app',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.App = void 0;
     var App = (function () {
         function App() {
         }
@@ -22,6 +23,7 @@ define('text!app.html',[],function(){return "<template>\n    <router-view></rout
 define('enums/leave-trigger',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.LeaveTrigger = void 0;
     var LeaveTrigger;
     (function (LeaveTrigger) {
         LeaveTrigger[LeaveTrigger["None"] = 0] = "None";
@@ -44,6 +46,7 @@ define('environment',["require", "exports"], function (require, exports) {
 define('helpers',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.getActiveBallPosition = exports.getCaughtBallPosition = void 0;
     function getCaughtBallPosition(player) {
         return { x: player.x + (player.flipX ? -50 : 50), y: player.y - 15 };
     }
@@ -60,6 +63,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 define('main',["require", "exports", "./environment"], function (require, exports, environment_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.configure = void 0;
     environment_1 = __importDefault(environment_1);
     function configure(aurelia) {
         aurelia.use
@@ -77,6 +81,7 @@ define('main',["require", "exports", "./environment"], function (require, export
 define('models/banter-model',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.BanterModel = void 0;
     var BanterModel = (function () {
         function BanterModel() {
         }
@@ -89,10 +94,12 @@ var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
         return extendStatics(d, b);
     };
     return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -101,6 +108,7 @@ var __extends = (this && this.__extends) || (function () {
 define('models/cpu-model',["require", "exports", "./player-model"], function (require, exports, player_model_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.CPUModel = void 0;
     var CPUModel = (function (_super) {
         __extends(CPUModel, _super);
         function CPUModel(init) {
@@ -126,6 +134,7 @@ define('models/cpu-model',["require", "exports", "./player-model"], function (re
 define('models/player-model',["require", "exports", "enums/leave-trigger"], function (require, exports, leave_trigger_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.PlayerModel = void 0;
     var PlayerModel = (function () {
         function PlayerModel(init) {
             this.leaveTrigger = leave_trigger_1.LeaveTrigger.None;
@@ -147,6 +156,7 @@ define('models/player-model',["require", "exports", "enums/leave-trigger"], func
 define('models/settings-model',["require", "exports", "./player-model", "./cpu-model"], function (require, exports, player_model_1, cpu_model_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.defaultSettings = exports.SettingsModel = void 0;
     var SettingsModel = (function () {
         function SettingsModel(init) {
             this.player = new player_model_1.PlayerModel();
@@ -169,7 +179,7 @@ define('models/settings-model',["require", "exports", "./player-model", "./cpu-m
             get: function () {
                 return this.player.portrait || this.computerPlayers.some(function (cpu) { return cpu.portrait; });
             },
-            enumerable: true,
+            enumerable: false,
             configurable: true
         });
         return SettingsModel;
@@ -196,6 +206,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 define('pages/game',["require", "exports", "./../scenes/cyberball", "./../models/settings-model", "phaser"], function (require, exports, cyberball_1, settings_model_1, phaser_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.GameViewModel = void 0;
     phaser_1 = __importDefault(phaser_1);
     var GameViewModel = (function () {
         function GameViewModel() {
@@ -255,6 +266,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 define('pages/home',["require", "exports", "aurelia-templating-resources", "aurelia-framework", "models/settings-model", "models/cpu-model", "clipboard"], function (require, exports, aurelia_templating_resources_1, aurelia_framework_1, settings_model_1, cpu_model_1, clipboard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.HomeViewModel = void 0;
     clipboard_1 = __importDefault(clipboard_1);
     var HomeViewModel = (function () {
         function HomeViewModel(signaler) {
@@ -270,7 +282,7 @@ define('pages/home',["require", "exports", "aurelia-templating-resources", "aure
         HomeViewModel.prototype.addCPU = function () {
             var _this = this;
             this.settings.computerPlayers.push(new cpu_model_1.CPUModel({
-                name: "Player " + (this.settings.computerPlayers.length + 2)
+                name: "Player ".concat(this.settings.computerPlayers.length + 2)
             }));
             this.settings.computerPlayers.forEach(function (cpu) {
                 while (cpu.targetPreference.length != _this.settings.computerPlayers.length)
@@ -293,14 +305,14 @@ define('pages/home',["require", "exports", "aurelia-templating-resources", "aure
                 url += btoa(JSON.stringify(this.settings));
                 return url;
             },
-            enumerable: true,
+            enumerable: false,
             configurable: true
         });
         HomeViewModel.prototype.testGame = function () {
             window.open(this.url);
         };
         HomeViewModel = __decorate([
-            aurelia_framework_1.autoinject(),
+            (0, aurelia_framework_1.autoinject)(),
             __metadata("design:paramtypes", [aurelia_templating_resources_1.BindingSignaler])
         ], HomeViewModel);
         return HomeViewModel;
@@ -321,6 +333,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 define('pages/message-test',["require", "exports", "aurelia-templating-resources", "aurelia-framework"], function (require, exports, aurelia_templating_resources_1, aurelia_framework_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.MessageTestViewModel = void 0;
     var MessageTestViewModel = (function () {
         function MessageTestViewModel(signaler) {
             this.signaler = signaler;
@@ -335,7 +348,7 @@ define('pages/message-test',["require", "exports", "aurelia-templating-resources
             });
         };
         MessageTestViewModel = __decorate([
-            aurelia_framework_1.autoinject(),
+            (0, aurelia_framework_1.autoinject)(),
             __metadata("design:paramtypes", [aurelia_templating_resources_1.BindingSignaler])
         ], MessageTestViewModel);
         return MessageTestViewModel;
@@ -347,6 +360,7 @@ define('text!pages/message-test.html',[],function(){return "<template>\n    <req
 define('resources/index',["require", "exports", "aurelia-framework"], function (require, exports, aurelia_framework_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.configure = void 0;
     function configure(config) {
         config.globalResources(aurelia_framework_1.PLATFORM.moduleName('./phaser-game/phaser-game'));
     }
@@ -368,6 +382,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 define('resources/phaser-game/phaser-game',["require", "exports", "aurelia-framework", "phaser"], function (require, exports, aurelia_framework_1, phaser_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.PhaserGameCustomElement = void 0;
     phaser_1 = __importDefault(phaser_1);
     var PhaserGameCustomElement = (function () {
         function PhaserGameCustomElement(element) {
@@ -386,9 +401,9 @@ define('resources/phaser-game/phaser-game',["require", "exports", "aurelia-frame
             __metadata("design:type", phaser_1.default.Game)
         ], PhaserGameCustomElement.prototype, "game", void 0);
         PhaserGameCustomElement = __decorate([
-            aurelia_framework_1.customElement('phaser-game'),
-            aurelia_framework_1.autoinject(),
-            aurelia_framework_1.inlineView('<template></template>'),
+            (0, aurelia_framework_1.customElement)('phaser-game'),
+            (0, aurelia_framework_1.autoinject)(),
+            (0, aurelia_framework_1.inlineView)('<template></template>'),
             __metadata("design:paramtypes", [Element])
         ], PhaserGameCustomElement);
         return PhaserGameCustomElement;
@@ -399,6 +414,7 @@ define('resources/phaser-game/phaser-game',["require", "exports", "aurelia-frame
 define('resources/value-converters/flag-value-converter',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.FlagValueConverter = void 0;
     var FlagValueConverter = (function () {
         function FlagValueConverter() {
         }
@@ -416,6 +432,7 @@ define('resources/value-converters/flag-value-converter',["require", "exports"],
 define('resources/value-converters/integer-array-value-converter',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.IntegerArrayValueConverter = void 0;
     var IntegerArrayValueConverter = (function () {
         function IntegerArrayValueConverter() {
         }
@@ -423,7 +440,7 @@ define('resources/value-converters/integer-array-value-converter',["require", "e
             value = value.replace(/[^0-9,]/g, '');
             if (value[value.length - 1] == ',')
                 value = value.substr(0, value.length - 1);
-            return JSON.parse("[" + value + "]");
+            return JSON.parse("[".concat(value, "]"));
         };
         IntegerArrayValueConverter.prototype.toView = function (value) {
             return JSON.stringify(value).substr(1, value.length * 2 - 1);
@@ -436,6 +453,7 @@ define('resources/value-converters/integer-array-value-converter',["require", "e
 define('resources/value-converters/integer-value-converter',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.IntegerValueConverter = void 0;
     var IntegerValueConverter = (function () {
         function IntegerValueConverter() {
         }
@@ -450,6 +468,7 @@ define('resources/value-converters/integer-value-converter',["require", "exports
 define('resources/value-converters/json-value-converter',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.JsonValueConverter = void 0;
     var JsonValueConverter = (function () {
         function JsonValueConverter() {
         }
@@ -465,10 +484,12 @@ var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
         return extendStatics(d, b);
     };
     return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -480,6 +501,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 define('scenes/cyberball',["require", "exports", "phaser"], function (require, exports, phaser_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.CyberballScene = void 0;
     phaser_1 = __importDefault(phaser_1);
     var textStyle = { fontFamily: 'Arial', color: '#000000' };
     var CyberballScene = (function (_super) {
@@ -497,7 +519,7 @@ define('scenes/cyberball',["require", "exports", "phaser"], function (require, e
         CyberballScene.prototype.preload = function () {
             var _this = this;
             this.load.crossOrigin = 'anonymous';
-            this.load.image('ball', this.settings.baseUrl + "/" + this.settings.ballSprite);
+            this.load.image('ball', "".concat(this.settings.baseUrl, "/").concat(this.settings.ballSprite));
             this.load.multiatlas('player', "./assets/player.json", 'assets');
             if (this.settings.player.portrait)
                 this.load.image('playerPortrait', 'https://cors-anywhere.herokuapp.com/' + this.settings.player.portrait);
