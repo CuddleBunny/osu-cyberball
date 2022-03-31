@@ -1,6 +1,5 @@
 import { PlayerModel } from './player-model';
 import { CPUModel } from './cpu-model';
-import { stringify } from 'querystring';
 
 export class SettingsModel {
     player: PlayerModel = new PlayerModel();

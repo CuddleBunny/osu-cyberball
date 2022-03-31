@@ -22,6 +22,7 @@ export class CPUModel extends PlayerModel {
     leaveTurnChance?: number = 100;
     leaveTimeChance?: number = 100;
     leaveIgnoredChance?: number = 100;
+    leaveTimeIgnoredChance?: number = 100;
     leaveOtherLeaverChance?: number = 50;
 
     constructor(init?: Partial<CPUModel>) {
