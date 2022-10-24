@@ -1,7 +1,7 @@
 import {BindingSignaler} from 'aurelia-templating-resources';
 import {autoinject} from 'aurelia-framework';
 import { SettingsModel, defaultSettings } from "models/settings-model";
-import { CPUModel } from 'models/cpu-model';
+import { CpuSettingsModel } from 'models/cpu-settings-model';
 import ClipboardJS from 'clipboard';
 
 @autoinject()
@@ -20,7 +20,7 @@ export class HomeViewModel {
     }
 
     addCPU() {
-        this.settings.computerPlayers.push(new CPUModel({
+        this.settings.computerPlayers.push(new CpuSettingsModel({
             name: `Player ${this.settings.computerPlayers.length + 2}`
         }));
 

@@ -1,1 +1,1012 @@
-define("app",["require","exports"],(function(e,t){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.App=void 0;var n=function(){function e(){}e.prototype.configureRouter=function(e,t){this.router=t;e.title="Cyberball";e.map([{route:["","home"],name:"home",moduleId:"pages/home"},{route:"game",name:"game",moduleId:"pages/game"},{route:"message-test",name:"message-test",moduleId:"pages/message-test"}])};return e}();t.App=n}));define("text!app.html",[],(function(){return"<template>\n    <router-view></router-view>\n</template>\n"}));define("enums/leave-trigger",["require","exports"],(function(e,t){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.LeaveTrigger=void 0;var n;(function(e){e[e["None"]=0]="None";e[e["Turn"]=1]="Turn";e[e["Time"]=2]="Time";e[e["Ignored"]=4]="Ignored";e[e["OtherLeaver"]=8]="OtherLeaver";e[e["TimeIgnored"]=16]="TimeIgnored"})(n=t.LeaveTrigger||(t.LeaveTrigger={}))}));define("environment",["require","exports"],(function(e,t){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.default={debug:false,testing:false}}));define("helpers",["require","exports"],(function(e,t){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.getActiveBallPosition=t.getCaughtBallPosition=void 0;function n(e){return{x:e.x+(e.flipX?-50:50),y:e.y-15}}t.getCaughtBallPosition=n;function r(e){return{x:e.x+(e.flipX?40:-40),y:e.y-20}}t.getActiveBallPosition=r}));var __importDefault=this&&this.__importDefault||function(e){return e&&e.__esModule?e:{default:e}};define("main",["require","exports","./environment"],(function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.configure=void 0;n=__importDefault(n);function r(e){e.use.standardConfiguration().feature("resources");e.use.developmentLogging(n.default.debug?"debug":"warn");if(n.default.testing){e.use.plugin("aurelia-testing")}e.start().then((function(){return e.setRoot()}))}t.configure=r}));define("models/banter-model",["require","exports"],(function(e,t){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.BanterModel=void 0;var n=function(){function e(){}return e}();t.BanterModel=n}));var __extends=this&&this.__extends||function(){var e=function(t,n){e=Object.setPrototypeOf||{__proto__:[]}instanceof Array&&function(e,t){e.__proto__=t}||function(e,t){for(var n in t)if(Object.prototype.hasOwnProperty.call(t,n))e[n]=t[n]};return e(t,n)};return function(t,n){if(typeof n!=="function"&&n!==null)throw new TypeError("Class extends value "+String(n)+" is not a constructor or null");e(t,n);function r(){this.constructor=t}t.prototype=n===null?Object.create(n):(r.prototype=n.prototype,new r)}}();define("models/cpu-model",["require","exports","./player-model"],(function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.CPUModel=void 0;var r=function(e){__extends(t,e);function t(t){var n=e.call(this)||this;n.targetPreference=[50,50];n.throwDelay=500;n.throwDelayVariance=200;n.catchDelay=500;n.catchDelayVariance=200;n.leaveTurnChance=100;n.leaveTimeChance=100;n.leaveIgnoredChance=100;n.leaveTimeIgnoredChance=100;n.leaveOtherLeaverChance=50;if(t)Object.assign(n,t);return n}return t}(n.PlayerModel);t.CPUModel=r}));define("models/player-model",["require","exports","enums/leave-trigger"],(function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.PlayerModel=void 0;var r=function(){function e(e){this.leaveTrigger=n.LeaveTrigger.None;this.leaveTurn=10;this.leaveTurnVariance=2;this.leaveTime=120;this.leaveTimeVariance=30;this.leaveIgnored=10;this.leaveIgnoredVariance=2;this.leaveTimeIgnored=45;this.leaveTimeIgnoredVariance=15;this.leaveOtherLeaver=2;if(e)Object.assign(this,e)}return e}();t.PlayerModel=r}));define("models/settings-model",["require","exports","./player-model","./cpu-model"],(function(e,t,n,r){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.defaultSettings=t.SettingsModel=void 0;var i=function(){function e(e){this.player=new n.PlayerModel;this.throwCount=10;this.ballSpeed=500;this.useSchedule=false;this.scheduleHonorsThrowCount=false;this.schedule=[1,2,0,1,2,0,1,2,0,1,2,0];this.baseUrl="./assets";this.ballSprite="ball.png";this.portraitHeight=75;this.portraitPadding=10;this.chatEnabled=false;this.gameOverText="Game Over";Object.assign(this,e)}Object.defineProperty(e.prototype,"hasPortraits",{get:function(){return this.player.portrait||this.computerPlayers.some((function(e){return e.portrait}))},enumerable:false,configurable:true});return e}();t.SettingsModel=i;t.defaultSettings=new i({player:new n.PlayerModel({name:"Player 1"}),computerPlayers:[new r.CPUModel({name:"Player 2"}),new r.CPUModel({name:"Player 3"})]})}));var __importDefault=this&&this.__importDefault||function(e){return e&&e.__esModule?e:{default:e}};define("pages/game",["require","exports","./../scenes/cyberball","./../models/settings-model","phaser"],(function(e,t,n,r,i){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.GameViewModel=void 0;i=__importDefault(i);var a=function(){function e(){this.settings=r.defaultSettings;this.gameWidth=800;this.gameHeight=460;this.chatMessages=[]}e.prototype.activate=function(e){if("settings"in e){this.settings=new r.SettingsModel(JSON.parse(atob(e.settings)))}if("playerName"in e){this.settings.player.name=e.playerName}if(this.settings.hasPortraits){this.gameHeight+=this.settings.portraitHeight*2+this.settings.portraitPadding*4}};e.prototype.bind=function(){this.gameConfig={type:i.default.AUTO,width:this.gameWidth,height:this.gameHeight,scene:new n.CyberballScene(this.settings),physics:{default:"arcade"}}};e.prototype.sendMessage=function(){this.chatMessages.push({sender:this.settings.player.name,text:this.chatMessage});this.chatMessage=""};return e}();t.GameViewModel=a}));define("text!pages/game.css",[],(function(){return"canvas {\n    max-width: 100%;\n}\n\n.chat-log {\n    border: 1px solid black;\n    border-bottom: 0;\n    height: 100px;\n    overflow-y: auto;\n}\n\n.chat-input {\n    display: flex;\n}\n\n.chat-input input {\n    flex: 1;\n}\n"}));define("text!pages/game.html",[],(function(){return'<template>\n    <require from="./game.css"></require>\n\n    <phaser-game config.bind="gameConfig"></phaser-game>\n\n    <div if.bind="settings.chatEnabled" class="chat" css="width: ${gameWidth}px">\n        <div class="chat-log">\n            <div repeat.for="message of chatMessages">\n                <strong>${message.sender}</strong>: <span>${message.text}</span>\n            </div>\n        </div>\n\n        <form class="chat-input" submit.delegate="sendMessage()">\n            <input value.bind="chatMessage" />\n            <button type="submit">Send</button>\n        </form>\n    </div>\n</template>\n'}));var __decorate=this&&this.__decorate||function(e,t,n,r){var i=arguments.length,a=i<3?t:r===null?r=Object.getOwnPropertyDescriptor(t,n):r,s;if(typeof Reflect==="object"&&typeof Reflect.decorate==="function")a=Reflect.decorate(e,t,n,r);else for(var l=e.length-1;l>=0;l--)if(s=e[l])a=(i<3?s(a):i>3?s(t,n,a):s(t,n))||a;return i>3&&a&&Object.defineProperty(t,n,a),a};var __metadata=this&&this.__metadata||function(e,t){if(typeof Reflect==="object"&&typeof Reflect.metadata==="function")return Reflect.metadata(e,t)};var __importDefault=this&&this.__importDefault||function(e){return e&&e.__esModule?e:{default:e}};define("pages/home",["require","exports","aurelia-templating-resources","aurelia-framework","models/settings-model","models/cpu-model","clipboard"],(function(e,t,n,r,i,a,s){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.HomeViewModel=void 0;s=__importDefault(s);var l=function(){function e(e){this.signaler=e;this.settings=i.defaultSettings}e.prototype.bind=function(){this.clipboard=new s.default("#copy")};e.prototype.unbind=function(){this.clipboard.destroy()};e.prototype.addCPU=function(){var e=this;this.settings.computerPlayers.push(new a.CPUModel({name:"Player ".concat(this.settings.computerPlayers.length+2)}));this.settings.computerPlayers.forEach((function(t){while(t.targetPreference.length!=e.settings.computerPlayers.length)t.targetPreference.push(0)}))};e.prototype.removeCPU=function(){this.settings.computerPlayers.pop();this.settings.computerPlayers.forEach((function(e){e.targetPreference.pop()}))};e.prototype.saveSettings=function(){this.signaler.signal("save-settings")};Object.defineProperty(e.prototype,"url",{get:function(){var e=document.location.origin+document.location.pathname;e+="#game?settings=";e+=btoa(JSON.stringify(this.settings));return e},enumerable:false,configurable:true});e.prototype.testGame=function(){window.open(this.url)};e=__decorate([(0,r.autoinject)(),__metadata("design:paramtypes",[n.BindingSignaler])],e);return e}();t.HomeViewModel=l}));define("text!pages/home.html",[],(function(){return'<template>\n    <require from="resources/value-converters/json-value-converter"></require>\n    <require from="resources/value-converters/integer-value-converter"></require>\n    <require from="resources/value-converters/integer-array-value-converter"></require>\n    <require from="resources/value-converters/flag-value-converter"></require>\n\n    <style>\n        body {\n            background: #111;\n            color: #eee;\n            font-family: \'Segoe UI\', Tahoma, Geneva, Verdana, sans-serif;\n        }\n\n        .input {\n            display: flex;\n            margin-bottom: 5px;\n        }\n\n        .input label {\n            width: 180px;\n        }\n\n        .input label + * {\n            box-sizing: border-box;\n            max-width: 300px;\n        }\n\n        .input input[type=text], .input input[type=number], textarea {\n            flex: 1 1 100%;\n            min-width: 0;\n            width: auto;\n        }\n\n        .column {\n            display: flex;\n            flex-direction: column;\n        }\n\n        .input > div {\n            display: flex;\n        }\n\n        pre {\n            max-width: 100%;\n            overflow-x: auto;\n        }\n    </style>\n\n    <div style="display: flex;">\n        <div style="margin-right: 20px;">\n            <h1>Cyberball Configuration Builder</h1>\n\n            <h2>Player</h2>\n\n            <div class="input">\n                <label>Name</label>\n                <input type="text" value.bind="settings.player.name" />\n            </div>\n\n            <div class="input">\n                <label>Tint Color</label>\n                <input type="color" value.bind="settings.player.tint" />\n            </div>\n\n            <div class="input">\n                <label>Portrait</label>\n                <input type="text" value.bind="settings.player.portrait" />\n            </div>\n\n            <div>Leave Triggers</div>\n            <div class="column">\n                <label>\n                    <input type="checkbox" checked.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:1" /> Throws Elapsed\n                </label>\n                <label>\n                    <input type="checkbox" checked.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:2" /> Time Elapsed\n                </label>\n                <label>\n                    <input type="checkbox" checked.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:4" /> Throws Ignored\n                </label>\n                <label>\n                    <input type="checkbox" checked.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:16" /> Time Ignored\n                </label>\n                <label>\n                    <input type="checkbox" checked.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:8" /> Other Players Leaving\n                </label>\n            </div>\n\n            <div class="column" if.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:1">\n                <label>Throws Elapsed Leave Threshold/Variance</label>\n\n                <div>\n                    <input type="number" value.bind="settings.player.leaveTurn | integer" />\n                    <input type="number" value.bind="settings.player.leaveTurnVariance | integer" />\n                </div>\n            </div>\n\n            <div class="column" if.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:2">\n                <label>Time Elapsed Leave Threshold/Variance</label>\n\n                <div>\n                    <input type="number" value.bind="settings.player.leaveTime | integer" />\n                    <input type="number" value.bind="settings.player.leaveTimeVariance | integer" />\n                </div>\n            </div>\n\n            <div class="column" if.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:4">\n                <label>Ignored Throws Leave Threshold/Variance</label>\n\n                <div>\n                    <input type="number" value.bind="settings.player.leaveIgnored | integer" />\n                    <input type="number" value.bind="settings.player.leaveIgnoredVariance | integer" />\n                </div>\n            </div>\n\n            <div class="column" if.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:16">\n                <label>Ignored Time Leave Threshold/Variance</label>\n\n                <div>\n                    <input type="number" value.bind="settings.player.leaveTimeIgnored | integer" />\n                    <input type="number" value.bind="settings.player.leaveTimeIgnoredVariance | integer" />\n                </div>\n            </div>\n\n            <div class="column" if.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:8">\n                <label>Others Left Leave Threshold</label>\n\n                <div>\n                    <input type="number" value.bind="settings.player.leaveOtherLeaver | integer" />\n                </div>\n            </div>\n\n            <h2>\n                CPUs\n                <button click.delegate="addCPU()">+ Add CPU</button>\n                <button click.delegate="removeCPU()">- Remove CPU</button>\n            </h2>\n\n            <div repeat.for="cpu of settings.computerPlayers">\n                <div class="input">\n                    <label>Name</label>\n                    <input type="text" value.bind="cpu.name" />\n                </div>\n\n                <div class="input">\n                    <label>Tint Color</label>\n                    <input type="color" value.bind="cpu.tint" />\n                </div>\n\n                <div class="input">\n                    <label>Portrait</label>\n                    <input type="text" value.bind="cpu.portrait" />\n                </div>\n\n                <div class="input">\n                    <label>Throw Delay</label>\n                    <input type="number" value.bind="cpu.throwDelay | integer" />\n                </div>\n\n                <div class="input">\n                    <label>Throw Delay Variance</label>\n                    <input type="number" value.bind="cpu.throwDelayVariance | integer" />\n                </div>\n\n                <div class="input">\n                    <label>Catch Delay</label>\n                    <input type="number" value.bind="cpu.catchDelay | integer" />\n                </div>\n\n                <div class="input">\n                    <label>Catch Delay Variance</label>\n                    <input type="number" value.bind="cpu.catchDelayVariance | integer" />\n                </div>\n\n\n                <div class="input">\n                    <label>Target Preference</label>\n\n                    <div>\n                        <input repeat.for="target of cpu.targetPreference" type="number" value.bind="cpu.targetPreference[$index] | integer" />\n                    </div>\n                </div>\n\n                <div>Leave Triggers</div>\n                <div class="column">\n                    <label>\n                        <input type="checkbox" checked.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:1" /> Throws Elapsed\n                    </label>\n                    <label>\n                        <input type="checkbox" checked.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:2" /> Time Elapsed\n                    </label>\n                    <label>\n                        <input type="checkbox" checked.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:4" /> Throws Ignored\n                    </label>\n                    <label>\n                        <input type="checkbox" checked.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:16" /> Time Ignored\n                    </label>\n                    <label>\n                        <input type="checkbox" checked.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:8" /> Other Players Leaving\n                    </label>\n                </div>\n\n                <div class="column" if.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:1">\n                    <label>Throws Elapsed Leave Threshold/Variance/Chance</label>\n\n                    <div>\n                        <input type="number" value.bind="cpu.leaveTurn | integer" />\n                        <input type="number" value.bind="cpu.leaveTurnVariance | integer" />\n                        <input type="number" value.bind="cpu.leaveTurnChance | integer" />\n                    </div>\n                </div>\n\n                <div class="column" if.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:2">\n                    <label>Time Elapsed Leave Threshold/Variance/Chance</label>\n\n                    <div>\n                        <input type="number" value.bind="cpu.leaveTime | integer" />\n                        <input type="number" value.bind="cpu.leaveTimeVariance | integer" />\n                        <input type="number" value.bind="cpu.leaveTimeChance | integer" />\n                    </div>\n                </div>\n\n                <div class="column" if.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:4">\n                    <label>Ignored Throws Leave Threshold/Variance/Chance</label>\n\n                    <div>\n                        <input type="number" value.bind="cpu.leaveIgnored | integer" />\n                        <input type="number" value.bind="cpu.leaveIgnoredVariance | integer" />\n                        <input type="number" value.bind="cpu.leaveIgnoredChance | integer" />\n                    </div>\n                </div>\n\n                <div class="column" if.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:16">\n                    <label>Ignored Time Leave Threshold/Variance/Chance</label>\n\n                    <div>\n                        <input type="number" value.bind="cpu.leaveTimeIgnored | integer" />\n                        <input type="number" value.bind="cpu.leaveTimeIgnoredVariance | integer" />\n                        <input type="number" value.bind="cpu.leaveTimeIgnoredChance | integer" />\n                    </div>\n                </div>\n\n                <div class="column" if.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:8">\n                    <label>Others Left Leave Threshold/Chance</label>\n\n                    <div>\n                        <input type="number" value.bind="cpu.leaveOtherLeaver | integer" />\n                        <input type="number" value.bind="cpu.leaveOtherLeaverChance | integer" />\n                    </div>\n                </div>\n\n                <hr />\n            </div>\n\n            <h2>Gameplay</h2>\n\n            <div class="input">\n                <label>Throw Count</label>\n                <input type="number" value.bind="settings.throwCount | integer" />\n            </div>\n\n            <div class="input">\n                <label>Ball Speed</label>\n                <input type="number" value.bind="settings.ballSpeed | integer" />\n            </div>\n\n            <div class="input">\n                <label>Ball Tint Color</label>\n                <input type="color" value.bind="settings.ballTint" />\n            </div>\n\n            <div class="input">\n                <label>Portrait Height</label>\n                <input type="number" value.bind="settings.portraitHeight | integer" />\n            </div>\n\n            <div class="input">\n                <label>Use Schedule</label>\n                <input type="checkbox" checked.bind="settings.useSchedule" />\n            </div>\n\n            <div class="input" if.bind="settings.useSchedule">\n                <label>Schedule</label>\n                <textarea value.bind="settings.schedule | integerArray & updateTrigger:\'blur\'"></textarea>\n            </div>\n\n            <div class="input">\n                <label>Schedule Honors Throw Count</label>\n                <input type="checkbox" checked.bind="settings.scheduleHonorsThrowCount" />\n            </div>\n\n            <div class="input">\n                <label>Game Over Text</label>\n                <input type="text" value.bind="settings.gameOverText" />\n            </div>\n\n            <button click.delegate="saveSettings()">Save</button>\n        </div>\n\n        <div style="overflow-y: auto;">\n            <pre>${settings | json & signal: \'save-settings\'}</pre>\n        </div>\n    </div>\n\n    <div>\n        <h1>\n            Code\n            <button id="copy" data-clipboard-target="#code">&#10697; Copy</button>\n            <button click.delegate="testGame()">&#129514; Test</button>\n        </h1>\n        <pre id="code">&lt;iframe id="cyberball" width="100%" height="580" src="${url}"&gt;&lt;/iframe&gt;</pre>\n    </div>\n</template>\n'}));var __decorate=this&&this.__decorate||function(e,t,n,r){var i=arguments.length,a=i<3?t:r===null?r=Object.getOwnPropertyDescriptor(t,n):r,s;if(typeof Reflect==="object"&&typeof Reflect.decorate==="function")a=Reflect.decorate(e,t,n,r);else for(var l=e.length-1;l>=0;l--)if(s=e[l])a=(i<3?s(a):i>3?s(t,n,a):s(t,n))||a;return i>3&&a&&Object.defineProperty(t,n,a),a};var __metadata=this&&this.__metadata||function(e,t){if(typeof Reflect==="object"&&typeof Reflect.metadata==="function")return Reflect.metadata(e,t)};define("pages/message-test",["require","exports","aurelia-templating-resources","aurelia-framework"],(function(e,t,n,r){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.MessageTestViewModel=void 0;var i=function(){function e(e){this.signaler=e;this.messages=[]}e.prototype.bind=function(){var e=this;window.addEventListener("message",(function(t){console.log("message",t.data);e.messages.push(t.data);e.signaler.signal("message")}))};e=__decorate([(0,r.autoinject)(),__metadata("design:paramtypes",[n.BindingSignaler])],e);return e}();t.MessageTestViewModel=i}));define("text!pages/message-test.html",[],(function(){return'<template>\n    <require from="resources/value-converters/json-value-converter"></require>\n\n    <iframe src="/#game" width="800" height="600"></iframe>\n    <div style="border: 1px solid black; width: 800px; height: 200px; overflow-y: auto;">\n        <div repeat.for="message of messages">${message | json & signal: \'message\'}</div>\n    </div>\n</template>\n'}));define("resources/index",["require","exports","aurelia-framework"],(function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.configure=void 0;function r(e){e.globalResources(n.PLATFORM.moduleName("./phaser-game/phaser-game"))}t.configure=r}));var __decorate=this&&this.__decorate||function(e,t,n,r){var i=arguments.length,a=i<3?t:r===null?r=Object.getOwnPropertyDescriptor(t,n):r,s;if(typeof Reflect==="object"&&typeof Reflect.decorate==="function")a=Reflect.decorate(e,t,n,r);else for(var l=e.length-1;l>=0;l--)if(s=e[l])a=(i<3?s(a):i>3?s(t,n,a):s(t,n))||a;return i>3&&a&&Object.defineProperty(t,n,a),a};var __metadata=this&&this.__metadata||function(e,t){if(typeof Reflect==="object"&&typeof Reflect.metadata==="function")return Reflect.metadata(e,t)};var __importDefault=this&&this.__importDefault||function(e){return e&&e.__esModule?e:{default:e}};define("resources/phaser-game/phaser-game",["require","exports","aurelia-framework","phaser"],(function(e,t,n,r){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.PhaserGameCustomElement=void 0;r=__importDefault(r);var i=function(){function e(e){this.element=e}e.prototype.bind=function(){this.config.parent=this.element;this.game=new r.default.Game(this.config)};__decorate([n.bindable,__metadata("design:type",Object)],e.prototype,"config",void 0);__decorate([n.bindable,__metadata("design:type",r.default.Game)],e.prototype,"game",void 0);e=__decorate([(0,n.customElement)("phaser-game"),(0,n.autoinject)(),(0,n.inlineView)("<template></template>"),__metadata("design:paramtypes",[Element])],e);return e}();t.PhaserGameCustomElement=i}));define("resources/value-converters/flag-value-converter",["require","exports"],(function(e,t){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.FlagValueConverter=void 0;var n=function(){function e(){}e.prototype.fromView=function(e,t,n){return e?t|n:t&~n};e.prototype.toView=function(e,t,n){return(t&n)===n};return e}();t.FlagValueConverter=n}));define("resources/value-converters/integer-array-value-converter",["require","exports"],(function(e,t){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.IntegerArrayValueConverter=void 0;var n=function(){function e(){}e.prototype.fromView=function(e){e=e.replace(/[^0-9,]/g,"");if(e[e.length-1]==",")e=e.substr(0,e.length-1);return JSON.parse("[".concat(e,"]"))};e.prototype.toView=function(e){return JSON.stringify(e).substr(1,e.length*2-1)};return e}();t.IntegerArrayValueConverter=n}));define("resources/value-converters/integer-value-converter",["require","exports"],(function(e,t){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.IntegerValueConverter=void 0;var n=function(){function e(){}e.prototype.fromView=function(e){return parseInt(e)};return e}();t.IntegerValueConverter=n}));define("resources/value-converters/json-value-converter",["require","exports"],(function(e,t){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.JsonValueConverter=void 0;var n=function(){function e(){}e.prototype.toView=function(e){return JSON.stringify(e,null,2)};return e}();t.JsonValueConverter=n}));var __extends=this&&this.__extends||function(){var e=function(t,n){e=Object.setPrototypeOf||{__proto__:[]}instanceof Array&&function(e,t){e.__proto__=t}||function(e,t){for(var n in t)if(Object.prototype.hasOwnProperty.call(t,n))e[n]=t[n]};return e(t,n)};return function(t,n){if(typeof n!=="function"&&n!==null)throw new TypeError("Class extends value "+String(n)+" is not a constructor or null");e(t,n);function r(){this.constructor=t}t.prototype=n===null?Object.create(n):(r.prototype=n.prototype,new r)}}();var __assign=this&&this.__assign||function(){__assign=Object.assign||function(e){for(var t,n=1,r=arguments.length;n<r;n++){t=arguments[n];for(var i in t)if(Object.prototype.hasOwnProperty.call(t,i))e[i]=t[i]}return e};return __assign.apply(this,arguments)};var __importDefault=this&&this.__importDefault||function(e){return e&&e.__esModule?e:{default:e}};define("scenes/cyberball",["require","exports","enums/leave-trigger","phaser"],(function(e,t,n,r){"use strict";Object.defineProperty(t,"__esModule",{value:true});t.CyberballScene=void 0;r=__importDefault(r);var i={fontFamily:"Arial",color:"#000000"};var a=function(e){__extends(t,e);function t(t){var n=e.call(this,{})||this;n.cpuSprites=[];n.playerHasBall=true;n.ballHeld=true;n.absentPlayers=[];n.showPlayerLeave=false;n.gameEnded=false;n.throwCount=0;n.scheduleIndex=0;n.lastTime=Date.now();n.startTime=Date.now();n.settings=t;return n}t.prototype.preload=function(){var e=this;this.load.crossOrigin="anonymous";this.load.image("ball","".concat(this.settings.baseUrl,"/").concat(this.settings.ballSprite));this.load.multiatlas("player","".concat(this.settings.baseUrl,"/player.json"),"assets");if(this.settings.player.portrait)this.load.image("playerPortrait","https://cors-anywhere.herokuapp.com/"+this.settings.player.portrait);this.settings.computerPlayers.forEach((function(t,n){if(t.portrait)e.load.image("cpuPortrait"+n,"https://cors-anywhere.herokuapp.com/"+t.portrait)}))};t.prototype.create=function(){var e=this;this.cameras.main.setBackgroundColor("#ffffff");this.anims.create({key:"active",frames:this.anims.generateFrameNames("player",{start:1,end:1,prefix:"active/",suffix:".png"})});this.anims.create({key:"idle",frames:this.anims.generateFrameNames("player",{start:1,end:1,prefix:"idle/",suffix:".png"})});this.anims.create({key:"throw",frameRate:12,frames:this.anims.generateFrameNames("player",{start:1,end:3,prefix:"throw/",suffix:".png"})});this.anims.create({key:"catch",frames:this.anims.generateFrameNames("player",{start:1,end:1,prefix:"catch/",suffix:".png"})});var t=this.getPlayerPosition();this.playerGroup=this.physics.add.group({immovable:true,allowGravity:false});this.playerSprite=this.playerGroup.create(t.x,t.y,"player","active/1.png");this.playerSprite.setData("settings",this.settings.player);if(this.settings.player.tint)this.playerSprite.setTint(parseInt(this.settings.player.tint.substr(1),16));this.playerSprite.setData("name-object",this.add.text(t.x,t.y+this.playerSprite.height/2+10,this.settings.player.name,i).setOrigin(.5));if(this.settings.player.portrait){var r=this.getPlayerPortraitPosition(this.playerSprite);var a=this.add.image(r.x,r.y,"playerPortrait");a.setScale(this.settings.portraitHeight/a.height)}if((this.settings.player.leaveTrigger&n.LeaveTrigger.Time)===n.LeaveTrigger.Time){this.playerSprite.setData("leaveTime",Date.now()+this.getVariantValue(this.settings.player.leaveIgnored,this.settings.player.leaveIgnoredVariance)*1e3)}if((this.settings.player.leaveTrigger&n.LeaveTrigger.TimeIgnored)===n.LeaveTrigger.TimeIgnored){this.playerSprite.setData("leaveTimeIgnored",Date.now()+this.getVariantValue(this.settings.player.leaveTimeIgnored,this.settings.player.leaveTimeIgnoredVariance)*1e3);console.log(Date.now(),this.playerSprite.getData("leaveTimeIgnored")-Date.now())}var s=function(s){var o=l.getCPUPosition(s);var u=l.playerGroup.create(o.x,o.y,"player","idle/1.png");u.setData("name-object",l.add.text(o.x,o.y+u.height/2+10,l.settings.computerPlayers[s].name,i).setOrigin(.5));if(l.settings.computerPlayers[s].portrait){r=l.getCPUPortraitPosition(s,u);a=l.add.image(r.x,r.y,"cpuPortrait"+s);a.setScale(l.settings.portraitHeight/a.height)}u.flipX=o.x>t.x;u.setData("settings",l.settings.computerPlayers[s]);if(l.settings.computerPlayers[s].tint)u.setTint(parseInt(l.settings.computerPlayers[s].tint.substr(1),16));u.setInteractive();u.on("pointerdown",(function(t){if(e.playerHasBall){e.playerSprite.flipX=e.input.x<e.playerSprite.x;var n=e.getActiveBallPosition(e.playerSprite);e.ballSprite.x=n.x;e.ballSprite.y=n.y;e.throwBall(e.playerSprite,u)}}));if((l.settings.computerPlayers[s].leaveTrigger&n.LeaveTrigger.Time)===n.LeaveTrigger.Time){u.setData("leaveTime",Date.now()+l.getVariantValue(l.settings.computerPlayers[s].leaveIgnored,l.settings.computerPlayers[s].leaveIgnoredVariance)*1e3)}if((l.settings.computerPlayers[s].leaveTrigger&n.LeaveTrigger.TimeIgnored)===n.LeaveTrigger.TimeIgnored){u.setData("leaveTimeIgnored",Date.now()+l.getVariantValue(l.settings.computerPlayers[s].leaveTimeIgnored,l.settings.computerPlayers[s].leaveTimeIgnoredVariance)*1e3)}l.cpuSprites.push(u)};var l=this,r,a;for(var o=0;o<this.settings.computerPlayers.length;o++){s(o)}var u=this.getActiveBallPosition(this.playerSprite);this.ballSprite=this.physics.add.sprite(u.x,u.y,"ball");if(this.settings.ballTint)this.ballSprite.setTint(parseInt(this.settings.ballTint.substr(1),16));this.physics.add.overlap(this.ballSprite,this.playerGroup,(function(t,n){if(!e.ballHeld&&n===e.throwTarget)e.catchBall(n)}))};t.prototype.update=function(){var e=this;if(this.playerHasBall){this.playerSprite.play("active");this.playerSprite.flipX=this.input.x<this.playerSprite.x;var t=this.getActiveBallPosition(this.playerSprite);this.ballSprite.x=t.x;this.ballSprite.y=t.y}else if(!this.ballHeld){this.playerGroup.getChildren().forEach((function(t){var n=t;if(n.frame.name.includes("idle"))n.flipX=e.ballSprite.x<n.x}))}if(!this.showPlayerLeave&&(this.settings.player.leaveTrigger&n.LeaveTrigger.Time)===n.LeaveTrigger.Time&&Date.now()>this.playerSprite.getData("leaveTime")){this.showPlayerLeave=true;this.postEvent("player-may-leave",{reason:"time elapsed"})}else if(!this.playerHasBall&&!this.showPlayerLeave&&(this.settings.player.leaveTrigger&n.LeaveTrigger.TimeIgnored)===n.LeaveTrigger.TimeIgnored&&Date.now()>this.playerSprite.getData("leaveTimeIgnored")){this.showPlayerLeave=true;this.postEvent("player-may-leave",{reason:"time ignored"})}this.cpuSprites.forEach((function(t){if(t==e.throwTarget||t.getData("absent"))return;var r=t.getData("settings");if((r.leaveTrigger&n.LeaveTrigger.Time)===n.LeaveTrigger.Time&&Date.now()>t.getData("leaveTime")){e.leaveGame(t,"time elapsed")}else if((r.leaveTrigger&n.LeaveTrigger.TimeIgnored)===n.LeaveTrigger.TimeIgnored&&Date.now()>t.getData("leaveTimeIgnored")){e.leaveGame(t,"time ignored")}}))};t.prototype.gameOver=function(){if(this.gameEnded)return;this.gameEnded=true;this.postEvent("game-end");clearTimeout(this.activeTimeout);this.playerGroup.children.each((function(e){return e.removeAllListeners()}));this.add.rectangle(this.sys.canvas.width/2,this.sys.canvas.height/2,this.sys.canvas.width,this.sys.canvas.height,14540253,.5);this.add.text(this.sys.canvas.width/2,this.sys.canvas.height/2,this.settings.gameOverText,i).setOrigin(.5)};t.prototype.throwBall=function(e,t){this.postEvent("throw",{thrower:e.getData("settings").name,receiver:t.getData("settings").name,wait:Date.now()-this.lastTime});this.lastTime=Date.now();var r=e.getData("settings");if((r.leaveTrigger&n.LeaveTrigger.TimeIgnored)===n.LeaveTrigger.TimeIgnored){t.setData("leaveTimeIgnored",Date.now()+this.getVariantValue(r.leaveTimeIgnored,r.leaveTimeIgnoredVariance)*1e3)}this.playerHasBall=this.ballHeld=false;this.throwTarget=t;this.throwCount++;e.play("throw");e.playAfterRepeat("idle");var i=this.getCaughtBallPosition(t);this.physics.moveTo(this.ballSprite,i.x,i.y,this.settings.ballSpeed)};t.prototype.catchBall=function(e){var t=this;var r;this.ballHeld=true;e.setData("throwsIgnored",0);e.play("catch");var i=this.getCaughtBallPosition(e);this.ballSprite.body.reset(i.x,i.y);if(!this.showPlayerLeave&&(this.settings.player.leaveTrigger&n.LeaveTrigger.Turn)===n.LeaveTrigger.Turn){var a=this.getVariantValue(this.settings.player.leaveTurn,this.settings.player.leaveTurnVariance);if(this.throwCount>=a){this.showPlayerLeave=true;this.postEvent("player-may-leave",{reason:"throws elapsed"})}}else if(!this.showPlayerLeave&&(this.settings.player.leaveTrigger&n.LeaveTrigger.Ignored)===n.LeaveTrigger.Ignored){var a=this.getVariantValue(this.settings.player.leaveIgnored,this.settings.player.leaveIgnoredVariance);var s=(r=this.playerSprite.getData("throwsIgnored"))!==null&&r!==void 0?r:0;if(this.playerSprite!=e)this.playerSprite.setData("throwsIgnored",++s);if(s>=a){this.showPlayerLeave=true;this.postEvent("player-may-leave",{reason:"throws ignored"})}}this.cpuSprites.forEach((function(r){var i;if(r==e||r.getData("absent"))return;var a=r.getData("settings");var s=((i=r.getData("throwsIgnored"))!==null&&i!==void 0?i:0)+1;r.setData("throwsIgnored",s);if((a.leaveTrigger&n.LeaveTrigger.Turn)===n.LeaveTrigger.Turn){var l=t.getVariantValue(a.leaveTurn,a.leaveTurnVariance);if(t.throwCount>=l&&t.checkChance(a.leaveTurnChance))t.leaveGame(r,"throws elapsed")}else if((a.leaveTrigger&n.LeaveTrigger.Ignored)===n.LeaveTrigger.Ignored){var l=t.getVariantValue(a.leaveIgnored,a.leaveIgnoredVariance);if(s>=l&&t.checkChance(a.leaveIgnoredChance))t.leaveGame(r,"throws ignored")}}));if(this.settings.useSchedule&&this.scheduleIndex===this.settings.schedule.length||this.settings.useSchedule&&this.settings.scheduleHonorsThrowCount&&this.throwCount>=this.settings.throwCount||!this.settings.useSchedule&&this.throwCount>=this.settings.throwCount){this.gameOver();return}if(e===this.playerSprite){this.playerHasBall=true}else{var l=e.getData("settings");this.activeTimeout=setTimeout((function(){e.play("active");i=t.getActiveBallPosition(e);t.ballSprite.x=i.x;t.ballSprite.y=i.y;t.activeTimeout=setTimeout((function(){if(t.settings.useSchedule){while(t.settings.schedule[t.scheduleIndex]===t.playerGroup.getChildren().indexOf(e)&&!t.absentPlayers.includes(t.settings.schedule[t.scheduleIndex]))t.scheduleIndex++;t.throwBall(e,t.playerGroup.getChildren()[t.settings.schedule[t.scheduleIndex]]);t.scheduleIndex++}else{var n=Math.random()*100;for(var r=0;r<l.targetPreference.length;r++){n-=l.targetPreference[r];if(n<=0){if(r>=t.playerGroup.getChildren().indexOf(e))r++;t.throwBall(e,t.playerGroup.getChildren()[r]);break}}}}),t.getVariantValue(l.throwDelay,l.throwDelayVariance))}),this.getVariantValue(l.catchDelay,l.catchDelayVariance))}};t.prototype.leaveGame=function(e,t){var r=this;if(t===void 0){t=""}var i=e.getData("name-object");var a=this.playerGroup.getChildren().indexOf(e);this.absentPlayers.push(a);e.setData("absent",true);i.setText([i.text,"has left the game."]);e.removeAllListeners();e.setVisible(false);this.postEvent("leave",{leaver:e.getData("settings").name,reason:t});console.log("pindex",a);this.settings.computerPlayers.forEach((function(e,t){if(r.absentPlayers.includes(t+1))return;console.log("distribute before",t,e.targetPreference);var n=a>t+1?a-1:a;var i=e.targetPreference[n];e.targetPreference[n]=0;var s=e.targetPreference.reduce((function(e,t){return e+t}));for(var l=0;l<e.targetPreference.length;l++){if(e.targetPreference[l]==0)continue;e.targetPreference[l]+=e.targetPreference[l]/s*i}console.log("distribute after",t,e.targetPreference)}));if(this.absentPlayers.length>=this.settings.computerPlayers.length){this.gameOver();return}if(!this.showPlayerLeave&&(this.settings.player.leaveTrigger&n.LeaveTrigger.OtherLeaver)===n.LeaveTrigger.OtherLeaver){console.log(this.absentPlayers.length,this.settings.player.leaveOtherLeaver);if(this.absentPlayers.length>=this.settings.player.leaveOtherLeaver){this.showPlayerLeave=true;this.postEvent("player-may-leave",{reason:"other leavers"})}}this.cpuSprites.forEach((function(e){var t=e.getData("settings");if(e==r.throwTarget||e.getData("absent"))return;if((t.leaveTrigger&n.LeaveTrigger.OtherLeaver)===n.LeaveTrigger.OtherLeaver){if(r.absentPlayers.length>=t.leaveOtherLeaver&&r.checkChance(t.leaveOtherLeaverChance))r.leaveGame(e,"other leavers")}}))};t.prototype.getCPUPosition=function(e){var t=75;var n=this.settings.hasPortraits?this.settings.portraitHeight+this.settings.portraitPadding*2:0;if(this.settings.computerPlayers.length===1){return new r.default.Geom.Point(this.sys.canvas.width/2,t+n)}return new r.default.Geom.Point((this.sys.canvas.width-t*2)/(this.settings.computerPlayers.length-1)*e+t,e===0||e===this.settings.computerPlayers.length-1?this.sys.canvas.height/2:t+n)};t.prototype.getCPUPortraitPosition=function(e,t){var n=this.getCPUPosition(e);return new r.default.Geom.Point(n.x,n.y-this.settings.portraitHeight+this.settings.portraitPadding*2-t.height/2)};t.prototype.getPlayerPosition=function(){var e=75;if(this.settings.hasPortraits)e+=this.settings.portraitHeight+this.settings.portraitPadding*2;return new r.default.Geom.Point(this.sys.canvas.width/2,this.sys.canvas.height-e)};t.prototype.getPlayerPortraitPosition=function(e){var t=this.getPlayerPosition();return new r.default.Geom.Point(t.x,t.y+this.settings.portraitHeight/2+this.settings.portraitPadding*2+e.height/2+10)};t.prototype.getCaughtBallPosition=function(e){return new r.default.Geom.Point(e.x+(e.flipX?-50:50),e.y-15)};t.prototype.getActiveBallPosition=function(e){return new r.default.Geom.Point(e.x+(e.flipX?40:-40),e.y-20)};t.prototype.getVariantValue=function(e,t){return e+r.default.Math.RND.between(0,t)*r.default.Math.RND.sign()};t.prototype.checkChance=function(e){return r.default.Math.RND.between(0,100)<=e};t.prototype.postEvent=function(e,t){if(t===void 0){t={}}console.log("post event: "+e,t);window.parent.postMessage(__assign({type:e},t),"*")};return t}(r.default.Scene);t.CyberballScene=a}));define("resources",["resources/index"],(function(e){return e}));
+define('app',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.App = void 0;
+    var App = (function () {
+        function App() {
+        }
+        App.prototype.configureRouter = function (config, router) {
+            this.router = router;
+            config.title = 'Cyberball';
+            config.map([
+                { route: ['', 'home'], name: 'home', moduleId: 'pages/home' },
+                { route: 'game', name: 'game', moduleId: 'pages/game' },
+                { route: 'message-test', name: 'message-test', moduleId: 'pages/message-test' }
+            ]);
+        };
+        return App;
+    }());
+    exports.App = App;
+});
+;
+define('text!app.html',[],function(){return "<template>\n    <router-view></router-view>\n</template>\n";});;
+define('behaviors/get-variant-value',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.getVariantValue = void 0;
+    function getVariantValue(base, variance) {
+        return base + (Phaser.Math.RND.between(0, variance) * Phaser.Math.RND.sign());
+    }
+    exports.getVariantValue = getVariantValue;
+});
+;
+define('enums/leave-trigger',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.LeaveTrigger = void 0;
+    var LeaveTrigger;
+    (function (LeaveTrigger) {
+        LeaveTrigger[LeaveTrigger["None"] = 0] = "None";
+        LeaveTrigger[LeaveTrigger["Turn"] = 1] = "Turn";
+        LeaveTrigger[LeaveTrigger["Time"] = 2] = "Time";
+        LeaveTrigger[LeaveTrigger["Ignored"] = 4] = "Ignored";
+        LeaveTrigger[LeaveTrigger["OtherLeaver"] = 8] = "OtherLeaver";
+        LeaveTrigger[LeaveTrigger["TimeIgnored"] = 16] = "TimeIgnored";
+    })(LeaveTrigger = exports.LeaveTrigger || (exports.LeaveTrigger = {}));
+});
+;
+define('environment',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.default = {
+        debug: true,
+        testing: true
+    };
+});
+;
+define('helpers',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.getActiveBallPosition = exports.getCaughtBallPosition = void 0;
+    function getCaughtBallPosition(player) {
+        return { x: player.x + (player.flipX ? -50 : 50), y: player.y - 15 };
+    }
+    exports.getCaughtBallPosition = getCaughtBallPosition;
+    function getActiveBallPosition(player) {
+        return { x: player.x + (player.flipX ? 40 : -40), y: player.y - 20 };
+    }
+    exports.getActiveBallPosition = getActiveBallPosition;
+});
+;
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+define('main',["require", "exports", "./environment"], function (require, exports, environment_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.configure = void 0;
+    environment_1 = __importDefault(environment_1);
+    function configure(aurelia) {
+        aurelia.use
+            .standardConfiguration()
+            .feature('resources');
+        aurelia.use.developmentLogging(environment_1.default.debug ? 'debug' : 'warn');
+        if (environment_1.default.testing) {
+            aurelia.use.plugin('aurelia-testing');
+        }
+        aurelia.start().then(function () { return aurelia.setRoot(); });
+    }
+    exports.configure = configure;
+});
+;
+define('models/banter-model',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.BanterModel = void 0;
+    var BanterModel = (function () {
+        function BanterModel() {
+        }
+        return BanterModel;
+    }());
+    exports.BanterModel = BanterModel;
+});
+;
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+define('models/cpu-model',["require", "exports", "./player-model"], function (require, exports, player_model_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.Cpu = void 0;
+    var Cpu = (function (_super) {
+        __extends(Cpu, _super);
+        function Cpu(settings, gameReference) {
+            return _super.call(this, settings, gameReference) || this;
+        }
+        return Cpu;
+    }(player_model_1.Player));
+    exports.Cpu = Cpu;
+});
+;
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+define('models/cpu-settings-model',["require", "exports", "./player-settings-model"], function (require, exports, player_settings_model_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.CpuSettingsModel = void 0;
+    var CpuSettingsModel = (function (_super) {
+        __extends(CpuSettingsModel, _super);
+        function CpuSettingsModel(init) {
+            var _this = _super.call(this) || this;
+            _this.targetPreference = [50, 50];
+            _this.throwDelay = 500;
+            _this.throwDelayVariance = 200;
+            _this.catchDelay = 500;
+            _this.catchDelayVariance = 200;
+            _this.leaveTurnChance = 100;
+            _this.leaveTimeChance = 100;
+            _this.leaveIgnoredChance = 100;
+            _this.leaveTimeIgnoredChance = 100;
+            _this.leaveOtherLeaverChance = 50;
+            if (init)
+                Object.assign(_this, init);
+            return _this;
+        }
+        return CpuSettingsModel;
+    }(player_settings_model_1.PlayerSettingsModel));
+    exports.CpuSettingsModel = CpuSettingsModel;
+});
+;
+define('models/player-model',["require", "exports", "./../behaviors/get-variant-value", "enums/leave-trigger"], function (require, exports, get_variant_value_1, leave_trigger_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.Player = void 0;
+    var Player = (function () {
+        function Player(settings, gameReference) {
+            this.hasBall = false;
+            this.settings = settings;
+            this.gameReference = gameReference;
+        }
+        Player.prototype.create = function () {
+            var position = this.getPosition();
+            this.group = this.gameReference.physics.add.group({ immovable: true, allowGravity: false });
+            this.sprite = this.group.create(position.x, position.y, 'player', 'active/1.png');
+            if (this.settings.tint)
+                this.sprite.setTint(parseInt(this.settings.tint.substring(1), 16));
+            this.nameText = this.gameReference.add.text(position.x, position.y + this.sprite.height / 2 + 10, this.settings.name, { fontFamily: 'Arial', color: '#000000' }).setOrigin(0.5);
+            if (this.settings.portrait) {
+                var portraitPosition = this.getPortraitPosition();
+                this.portrait = this.gameReference.add.image(portraitPosition.x, portraitPosition.y, 'playerPortrait');
+            }
+            if ((this.settings.leaveTrigger & leave_trigger_1.LeaveTrigger.Time) === leave_trigger_1.LeaveTrigger.Time) {
+                this.leaveTimeThreshold = Date.now() + (0, get_variant_value_1.getVariantValue)(this.settings.leaveTime, this.settings.leaveTimeVariance) * 1000;
+            }
+            if ((this.settings.leaveTrigger & leave_trigger_1.LeaveTrigger.TimeIgnored) === leave_trigger_1.LeaveTrigger.TimeIgnored) {
+                this.leaveIgnoreTimeThreshold = Date.now() + (0, get_variant_value_1.getVariantValue)(this.settings.leaveTimeIgnored, this.settings.leaveTimeIgnoredVariance) * 1000;
+            }
+        };
+        Player.prototype.getPosition = function () {
+            var padding = 75;
+            if (this.gameReference.settings.hasPortraits)
+                padding += this.gameReference.settings.portraitHeight + this.gameReference.settings.portraitPadding * 2;
+            return new Phaser.Geom.Point(this.gameReference.sys.canvas.width / 2, this.gameReference.sys.canvas.height - padding);
+        };
+        Player.prototype.getPortraitPosition = function () {
+            var position = this.getPosition();
+            return new Phaser.Geom.Point(position.x, position.y + this.gameReference.settings.portraitHeight / 2 + this.gameReference.settings.portraitPadding * 2 + this.sprite.height / 2 + 10);
+        };
+        return Player;
+    }());
+    exports.Player = Player;
+});
+;
+define('models/player-settings-model',["require", "exports", "enums/leave-trigger"], function (require, exports, leave_trigger_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.PlayerSettingsModel = void 0;
+    var PlayerSettingsModel = (function () {
+        function PlayerSettingsModel(init) {
+            this.leaveTrigger = leave_trigger_1.LeaveTrigger.None;
+            this.leaveTurn = 10;
+            this.leaveTurnVariance = 2;
+            this.leaveTime = 120;
+            this.leaveTimeVariance = 30;
+            this.leaveIgnored = 10;
+            this.leaveIgnoredVariance = 2;
+            this.leaveTimeIgnored = 45;
+            this.leaveTimeIgnoredVariance = 15;
+            this.leaveOtherLeaver = 2;
+            if (init)
+                Object.assign(this, init);
+        }
+        return PlayerSettingsModel;
+    }());
+    exports.PlayerSettingsModel = PlayerSettingsModel;
+});
+;
+define('models/settings-model',["require", "exports", "./player-settings-model", "./cpu-settings-model"], function (require, exports, player_settings_model_1, cpu_settings_model_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.defaultSettings = exports.SettingsModel = void 0;
+    var SettingsModel = (function () {
+        function SettingsModel(init) {
+            this.player = new player_settings_model_1.PlayerSettingsModel();
+            this.throwCount = 10;
+            this.timeLimit = 0;
+            this.displayTimeLimit = false;
+            this.timeLimitText = 'Time Limit:';
+            this.ballSpeed = 500;
+            this.useSchedule = false;
+            this.scheduleHonorsThrowCount = false;
+            this.schedule = [
+                1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0
+            ];
+            this.baseUrl = './assets';
+            this.ballSprite = 'ball.png';
+            this.portraitHeight = 75;
+            this.portraitPadding = 10;
+            this.chatEnabled = false;
+            this.gameOverText = "Game Over";
+            this.gameOverOpacity = 0.5;
+            Object.assign(this, init);
+        }
+        Object.defineProperty(SettingsModel.prototype, "hasPortraits", {
+            get: function () {
+                return this.player.portrait || this.computerPlayers.some(function (cpu) { return cpu.portrait; });
+            },
+            enumerable: false,
+            configurable: true
+        });
+        return SettingsModel;
+    }());
+    exports.SettingsModel = SettingsModel;
+    exports.defaultSettings = new SettingsModel({
+        player: new player_settings_model_1.PlayerSettingsModel({
+            name: 'Player 1'
+        }),
+        computerPlayers: [
+            new cpu_settings_model_1.CpuSettingsModel({
+                name: 'Player 2'
+            }),
+            new cpu_settings_model_1.CpuSettingsModel({
+                name: 'Player 3'
+            })
+        ]
+    });
+});
+;
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+define('pages/game',["require", "exports", "./../scenes/cyberball", "./../models/settings-model", "phaser"], function (require, exports, cyberball_1, settings_model_1, phaser_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.GameViewModel = void 0;
+    phaser_1 = __importDefault(phaser_1);
+    var GameViewModel = (function () {
+        function GameViewModel() {
+            this.settings = settings_model_1.defaultSettings;
+            this.gameWidth = 800;
+            this.gameHeight = 460;
+            this.chatMessages = [];
+        }
+        GameViewModel.prototype.activate = function (params) {
+            if ('settings' in params) {
+                this.settings = new settings_model_1.SettingsModel(JSON.parse(atob(params.settings)));
+            }
+            if ('playerName' in params) {
+                this.settings.player.name = params.playerName;
+            }
+            if (this.settings.hasPortraits) {
+                this.gameHeight += this.settings.portraitHeight * 2 + this.settings.portraitPadding * 4;
+            }
+        };
+        GameViewModel.prototype.bind = function () {
+            this.gameConfig = {
+                type: phaser_1.default.AUTO,
+                width: this.gameWidth,
+                height: this.gameHeight,
+                scene: new cyberball_1.CyberballScene(this.settings),
+                physics: {
+                    default: 'arcade'
+                }
+            };
+        };
+        GameViewModel.prototype.sendMessage = function () {
+            this.chatMessages.push({
+                sender: this.settings.player.name,
+                text: this.chatMessage
+            });
+            this.chatMessage = '';
+        };
+        return GameViewModel;
+    }());
+    exports.GameViewModel = GameViewModel;
+});
+;
+define('text!pages/game.css',[],function(){return "canvas {\n    max-width: 100%;\n}\n\n.chat-log {\n    border: 1px solid black;\n    border-bottom: 0;\n    height: 100px;\n    overflow-y: auto;\n}\n\n.chat-input {\n    display: flex;\n}\n\n.chat-input input {\n    flex: 1;\n}\n";});;
+define('text!pages/game.html',[],function(){return "<template>\n    <require from=\"./game.css\"></require>\n\n    <phaser-game config.bind=\"gameConfig\"></phaser-game>\n\n    <div if.bind=\"settings.chatEnabled\" class=\"chat\" css=\"width: ${gameWidth}px\">\n        <div class=\"chat-log\">\n            <div repeat.for=\"message of chatMessages\">\n                <strong>${message.sender}</strong>: <span>${message.text}</span>\n            </div>\n        </div>\n\n        <form class=\"chat-input\" submit.delegate=\"sendMessage()\">\n            <input value.bind=\"chatMessage\" />\n            <button type=\"submit\">Send</button>\n        </form>\n    </div>\n</template>\n";});;
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+define('pages/home',["require", "exports", "aurelia-templating-resources", "aurelia-framework", "models/settings-model", "models/cpu-settings-model", "clipboard"], function (require, exports, aurelia_templating_resources_1, aurelia_framework_1, settings_model_1, cpu_settings_model_1, clipboard_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.HomeViewModel = void 0;
+    clipboard_1 = __importDefault(clipboard_1);
+    var HomeViewModel = (function () {
+        function HomeViewModel(signaler) {
+            this.signaler = signaler;
+            this.settings = settings_model_1.defaultSettings;
+        }
+        HomeViewModel.prototype.bind = function () {
+            this.clipboard = new clipboard_1.default('#copy');
+        };
+        HomeViewModel.prototype.unbind = function () {
+            this.clipboard.destroy();
+        };
+        HomeViewModel.prototype.addCPU = function () {
+            var _this = this;
+            this.settings.computerPlayers.push(new cpu_settings_model_1.CpuSettingsModel({
+                name: "Player ".concat(this.settings.computerPlayers.length + 2)
+            }));
+            this.settings.computerPlayers.forEach(function (cpu) {
+                while (cpu.targetPreference.length != _this.settings.computerPlayers.length)
+                    cpu.targetPreference.push(0);
+            });
+        };
+        HomeViewModel.prototype.removeCPU = function () {
+            this.settings.computerPlayers.pop();
+            this.settings.computerPlayers.forEach(function (cpu) {
+                cpu.targetPreference.pop();
+            });
+        };
+        HomeViewModel.prototype.saveSettings = function () {
+            this.signaler.signal('save-settings');
+        };
+        Object.defineProperty(HomeViewModel.prototype, "url", {
+            get: function () {
+                var url = document.location.origin + document.location.pathname;
+                url += '#game?settings=';
+                url += btoa(JSON.stringify(this.settings));
+                return url;
+            },
+            enumerable: false,
+            configurable: true
+        });
+        HomeViewModel.prototype.testGame = function () {
+            window.open(this.url);
+        };
+        HomeViewModel = __decorate([
+            (0, aurelia_framework_1.autoinject)(),
+            __metadata("design:paramtypes", [aurelia_templating_resources_1.BindingSignaler])
+        ], HomeViewModel);
+        return HomeViewModel;
+    }());
+    exports.HomeViewModel = HomeViewModel;
+});
+;
+define('text!pages/home.html',[],function(){return "<template>\n    <require from=\"resources/value-converters/json-value-converter\"></require>\n    <require from=\"resources/value-converters/integer-value-converter\"></require>\n    <require from=\"resources/value-converters/number-value-converter\"></require>\n    <require from=\"resources/value-converters/integer-array-value-converter\"></require>\n    <require from=\"resources/value-converters/flag-value-converter\"></require>\n\n    <style>\n        body {\n            background: #111;\n            color: #eee;\n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n        }\n\n        .input {\n            display: flex;\n            margin-bottom: 5px;\n        }\n\n        .input label {\n            width: 180px;\n        }\n\n        .input label + * {\n            box-sizing: border-box;\n            max-width: 300px;\n        }\n\n        .input input[type=text], .input input[type=number], textarea {\n            flex: 1 1 100%;\n            min-width: 0;\n            width: auto;\n        }\n\n        .column {\n            display: flex;\n            flex-direction: column;\n        }\n\n        .input > div {\n            display: flex;\n        }\n\n        pre {\n            max-width: 100%;\n            overflow-x: auto;\n        }\n    </style>\n\n    <div style=\"display: flex;\">\n        <div style=\"margin-right: 20px;\">\n            <h1>Cyberball Configuration Builder</h1>\n\n            <h2>Player</h2>\n\n            <div class=\"input\">\n                <label>Name</label>\n                <input type=\"text\" value.bind=\"settings.player.name\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Tint Color</label>\n                <input type=\"color\" value.bind=\"settings.player.tint\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Portrait</label>\n                <input type=\"text\" value.bind=\"settings.player.portrait\" />\n            </div>\n\n            <div>Leave Triggers</div>\n            <div class=\"column\">\n                <label>\n                    <input type=\"checkbox\" checked.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:1\" /> Throws Elapsed\n                </label>\n                <label>\n                    <input type=\"checkbox\" checked.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:2\" /> Time Elapsed\n                </label>\n                <label>\n                    <input type=\"checkbox\" checked.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:4\" /> Throws Ignored\n                </label>\n                <label>\n                    <input type=\"checkbox\" checked.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:16\" /> Time Ignored\n                </label>\n                <label>\n                    <input type=\"checkbox\" checked.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:8\" /> Other Players Leaving\n                </label>\n            </div>\n\n            <div class=\"column\" if.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:1\">\n                <label>Throws Elapsed Leave Threshold/Variance</label>\n\n                <div>\n                    <input type=\"number\" value.bind=\"settings.player.leaveTurn | integer\" />\n                    <input type=\"number\" value.bind=\"settings.player.leaveTurnVariance | integer\" />\n                </div>\n            </div>\n\n            <div class=\"column\" if.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:2\">\n                <label>Time Elapsed Leave Threshold/Variance</label>\n\n                <div>\n                    <input type=\"number\" value.bind=\"settings.player.leaveTime | integer\" />\n                    <input type=\"number\" value.bind=\"settings.player.leaveTimeVariance | integer\" />\n                </div>\n            </div>\n\n            <div class=\"column\" if.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:4\">\n                <label>Ignored Throws Leave Threshold/Variance</label>\n\n                <div>\n                    <input type=\"number\" value.bind=\"settings.player.leaveIgnored | integer\" />\n                    <input type=\"number\" value.bind=\"settings.player.leaveIgnoredVariance | integer\" />\n                </div>\n            </div>\n\n            <div class=\"column\" if.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:16\">\n                <label>Ignored Time Leave Threshold/Variance</label>\n\n                <div>\n                    <input type=\"number\" value.bind=\"settings.player.leaveTimeIgnored | integer\" />\n                    <input type=\"number\" value.bind=\"settings.player.leaveTimeIgnoredVariance | integer\" />\n                </div>\n            </div>\n\n            <div class=\"column\" if.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:8\">\n                <label>Others Left Leave Threshold</label>\n\n                <div>\n                    <input type=\"number\" value.bind=\"settings.player.leaveOtherLeaver | integer\" />\n                </div>\n            </div>\n\n            <h2>\n                CPUs\n                <button click.delegate=\"addCPU()\">+ Add CPU</button>\n                <button click.delegate=\"removeCPU()\">- Remove CPU</button>\n            </h2>\n\n            <div repeat.for=\"cpu of settings.computerPlayers\">\n                <div class=\"input\">\n                    <label>Name</label>\n                    <input type=\"text\" value.bind=\"cpu.name\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Tint Color</label>\n                    <input type=\"color\" value.bind=\"cpu.tint\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Portrait</label>\n                    <input type=\"text\" value.bind=\"cpu.portrait\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Throw Delay</label>\n                    <input type=\"number\" value.bind=\"cpu.throwDelay | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Throw Delay Variance</label>\n                    <input type=\"number\" value.bind=\"cpu.throwDelayVariance | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Catch Delay</label>\n                    <input type=\"number\" value.bind=\"cpu.catchDelay | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Catch Delay Variance</label>\n                    <input type=\"number\" value.bind=\"cpu.catchDelayVariance | integer\" />\n                </div>\n\n\n                <div class=\"input\">\n                    <label>Target Preference</label>\n\n                    <div>\n                        <input repeat.for=\"target of cpu.targetPreference\" type=\"number\" value.bind=\"cpu.targetPreference[$index] | integer\" />\n                    </div>\n                </div>\n\n                <div>Leave Triggers</div>\n                <div class=\"column\">\n                    <label>\n                        <input type=\"checkbox\" checked.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:1\" /> Throws Elapsed\n                    </label>\n                    <label>\n                        <input type=\"checkbox\" checked.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:2\" /> Time Elapsed\n                    </label>\n                    <label>\n                        <input type=\"checkbox\" checked.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:4\" /> Throws Ignored\n                    </label>\n                    <label>\n                        <input type=\"checkbox\" checked.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:16\" /> Time Ignored\n                    </label>\n                    <label>\n                        <input type=\"checkbox\" checked.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:8\" /> Other Players Leaving\n                    </label>\n                </div>\n\n                <div class=\"column\" if.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:1\">\n                    <label>Throws Elapsed Leave Threshold/Variance/Chance</label>\n\n                    <div>\n                        <input type=\"number\" value.bind=\"cpu.leaveTurn | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveTurnVariance | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveTurnChance | integer\" />\n                    </div>\n                </div>\n\n                <div class=\"column\" if.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:2\">\n                    <label>Time Elapsed Leave Threshold/Variance/Chance</label>\n\n                    <div>\n                        <input type=\"number\" value.bind=\"cpu.leaveTime | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveTimeVariance | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveTimeChance | integer\" />\n                    </div>\n                </div>\n\n                <div class=\"column\" if.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:4\">\n                    <label>Ignored Throws Leave Threshold/Variance/Chance</label>\n\n                    <div>\n                        <input type=\"number\" value.bind=\"cpu.leaveIgnored | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveIgnoredVariance | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveIgnoredChance | integer\" />\n                    </div>\n                </div>\n\n                <div class=\"column\" if.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:16\">\n                    <label>Ignored Time Leave Threshold/Variance/Chance</label>\n\n                    <div>\n                        <input type=\"number\" value.bind=\"cpu.leaveTimeIgnored | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveTimeIgnoredVariance | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveTimeIgnoredChance | integer\" />\n                    </div>\n                </div>\n\n                <div class=\"column\" if.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:8\">\n                    <label>Others Left Leave Threshold/Chance</label>\n\n                    <div>\n                        <input type=\"number\" value.bind=\"cpu.leaveOtherLeaver | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveOtherLeaverChance | integer\" />\n                    </div>\n                </div>\n\n                <hr />\n            </div>\n\n            <h2>Gameplay</h2>\n\n            <div class=\"input\">\n                <label>Throw Count</label>\n                <input type=\"number\" value.bind=\"settings.throwCount | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Time Limit</label>\n                <input type=\"number\" value.bind=\"settings.timeLimit | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Display Time Limit</label>\n                <input type=\"checkbox\" checked.bind=\"settings.displayTimeLimit\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Time Limit Label</label>\n                <input type=\"text\" value.bind=\"settings.timeLimitText\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Ball Speed</label>\n                <input type=\"number\" value.bind=\"settings.ballSpeed | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Ball Tint Color</label>\n                <input type=\"color\" value.bind=\"settings.ballTint\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Portrait Height</label>\n                <input type=\"number\" value.bind=\"settings.portraitHeight | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Use Schedule</label>\n                <input type=\"checkbox\" checked.bind=\"settings.useSchedule\" />\n            </div>\n\n            <div class=\"input\" if.bind=\"settings.useSchedule\">\n                <label>Schedule</label>\n                <textarea value.bind=\"settings.schedule | integerArray & updateTrigger:'blur'\"></textarea>\n            </div>\n\n            <div class=\"input\">\n                <label>Schedule Honors Throw Count</label>\n                <input type=\"checkbox\" checked.bind=\"settings.scheduleHonorsThrowCount\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Game Over Text</label>\n                <input type=\"text\" value.bind=\"settings.gameOverText\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Game Over Opacity</label>\n                <input type=\"number\" min=\"0\" max=\"1\" step=\"0.1\" value.bind=\"settings.gameOverOpacity | number\" />\n            </div>\n\n            <button click.delegate=\"saveSettings()\">Save</button>\n        </div>\n\n        <div style=\"overflow-y: auto;\">\n            <pre>${settings | json & signal: 'save-settings'}</pre>\n        </div>\n    </div>\n\n    <div>\n        <h1>\n            Code\n            <button id=\"copy\" data-clipboard-target=\"#code\">&#10697; Copy</button>\n            <button click.delegate=\"testGame()\">&#129514; Test</button>\n        </h1>\n        <pre id=\"code\">&lt;iframe id=\"cyberball\" width=\"100%\" height=\"580\" src=\"${url}\"&gt;&lt;/iframe&gt;</pre>\n    </div>\n</template>\n";});;
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+define('pages/message-test',["require", "exports", "aurelia-templating-resources", "aurelia-framework"], function (require, exports, aurelia_templating_resources_1, aurelia_framework_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.MessageTestViewModel = void 0;
+    var MessageTestViewModel = (function () {
+        function MessageTestViewModel(signaler) {
+            this.signaler = signaler;
+            this.messages = [];
+        }
+        MessageTestViewModel.prototype.bind = function () {
+            var _this = this;
+            window.addEventListener('message', function (e) {
+                console.log('message', e.data);
+                _this.messages.push(e.data);
+                _this.signaler.signal('message');
+            });
+        };
+        MessageTestViewModel = __decorate([
+            (0, aurelia_framework_1.autoinject)(),
+            __metadata("design:paramtypes", [aurelia_templating_resources_1.BindingSignaler])
+        ], MessageTestViewModel);
+        return MessageTestViewModel;
+    }());
+    exports.MessageTestViewModel = MessageTestViewModel;
+});
+;
+define('text!pages/message-test.html',[],function(){return "<template>\n    <require from=\"resources/value-converters/json-value-converter\"></require>\n\n    <iframe src=\"/#game\" width=\"800\" height=\"600\"></iframe>\n    <div style=\"border: 1px solid black; width: 800px; height: 200px; overflow-y: auto;\">\n        <div repeat.for=\"message of messages\">${message | json & signal: 'message'}</div>\n    </div>\n</template>\n";});;
+define('resources/index',["require", "exports", "aurelia-framework"], function (require, exports, aurelia_framework_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.configure = void 0;
+    function configure(config) {
+        config.globalResources(aurelia_framework_1.PLATFORM.moduleName('./phaser-game/phaser-game'));
+    }
+    exports.configure = configure;
+});
+;
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+define('resources/phaser-game/phaser-game',["require", "exports", "aurelia-framework", "phaser"], function (require, exports, aurelia_framework_1, phaser_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.PhaserGameCustomElement = void 0;
+    phaser_1 = __importDefault(phaser_1);
+    var PhaserGameCustomElement = (function () {
+        function PhaserGameCustomElement(element) {
+            this.element = element;
+        }
+        PhaserGameCustomElement.prototype.bind = function () {
+            this.config.parent = this.element;
+            this.game = new phaser_1.default.Game(this.config);
+        };
+        __decorate([
+            aurelia_framework_1.bindable,
+            __metadata("design:type", Object)
+        ], PhaserGameCustomElement.prototype, "config", void 0);
+        __decorate([
+            aurelia_framework_1.bindable,
+            __metadata("design:type", phaser_1.default.Game)
+        ], PhaserGameCustomElement.prototype, "game", void 0);
+        PhaserGameCustomElement = __decorate([
+            (0, aurelia_framework_1.customElement)('phaser-game'),
+            (0, aurelia_framework_1.autoinject)(),
+            (0, aurelia_framework_1.inlineView)('<template></template>'),
+            __metadata("design:paramtypes", [Element])
+        ], PhaserGameCustomElement);
+        return PhaserGameCustomElement;
+    }());
+    exports.PhaserGameCustomElement = PhaserGameCustomElement;
+});
+;
+define('resources/value-converters/flag-value-converter',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.FlagValueConverter = void 0;
+    var FlagValueConverter = (function () {
+        function FlagValueConverter() {
+        }
+        FlagValueConverter.prototype.fromView = function (value, source, flag) {
+            return value ? source | flag : source & ~flag;
+        };
+        FlagValueConverter.prototype.toView = function (_value, source, flag) {
+            return (source & flag) === flag;
+        };
+        return FlagValueConverter;
+    }());
+    exports.FlagValueConverter = FlagValueConverter;
+});
+;
+define('resources/value-converters/integer-array-value-converter',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.IntegerArrayValueConverter = void 0;
+    var IntegerArrayValueConverter = (function () {
+        function IntegerArrayValueConverter() {
+        }
+        IntegerArrayValueConverter.prototype.fromView = function (value) {
+            value = value.replace(/[^0-9,]/g, '');
+            if (value[value.length - 1] == ',')
+                value = value.substr(0, value.length - 1);
+            return JSON.parse("[".concat(value, "]"));
+        };
+        IntegerArrayValueConverter.prototype.toView = function (value) {
+            return JSON.stringify(value).substr(1, value.length * 2 - 1);
+        };
+        return IntegerArrayValueConverter;
+    }());
+    exports.IntegerArrayValueConverter = IntegerArrayValueConverter;
+});
+;
+define('resources/value-converters/integer-value-converter',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.IntegerValueConverter = void 0;
+    var IntegerValueConverter = (function () {
+        function IntegerValueConverter() {
+        }
+        IntegerValueConverter.prototype.fromView = function (value) {
+            return parseInt(value !== null && value !== void 0 ? value : '0');
+        };
+        return IntegerValueConverter;
+    }());
+    exports.IntegerValueConverter = IntegerValueConverter;
+});
+;
+define('resources/value-converters/json-value-converter',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.JsonValueConverter = void 0;
+    var JsonValueConverter = (function () {
+        function JsonValueConverter() {
+        }
+        JsonValueConverter.prototype.toView = function (value) {
+            return JSON.stringify(value, null, 2);
+        };
+        return JsonValueConverter;
+    }());
+    exports.JsonValueConverter = JsonValueConverter;
+});
+;
+define('resources/value-converters/number-value-converter',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.NumberValueConverter = void 0;
+    var NumberValueConverter = (function () {
+        function NumberValueConverter() {
+        }
+        NumberValueConverter.prototype.fromView = function (value) {
+            return parseFloat(value !== null && value !== void 0 ? value : '0');
+        };
+        return NumberValueConverter;
+    }());
+    exports.NumberValueConverter = NumberValueConverter;
+});
+;
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+define('scenes/cyberball',["require", "exports", "enums/leave-trigger", "phaser"], function (require, exports, leave_trigger_1, phaser_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.CyberballScene = void 0;
+    phaser_1 = __importDefault(phaser_1);
+    var textStyle = { fontFamily: 'Arial', color: '#000000' };
+    var CyberballScene = (function (_super) {
+        __extends(CyberballScene, _super);
+        function CyberballScene(settings) {
+            var _this = _super.call(this, {}) || this;
+            _this.cpuSprites = [];
+            _this.playerHasBall = true;
+            _this.ballHeld = true;
+            _this.absentPlayers = [];
+            _this.showPlayerLeave = false;
+            _this.gameEnded = false;
+            _this.throwCount = 0;
+            _this.scheduleIndex = 0;
+            _this.settings = settings;
+            return _this;
+        }
+        CyberballScene.prototype.preload = function () {
+            var _this = this;
+            this.load.crossOrigin = 'anonymous';
+            this.load.image('ball', "".concat(this.settings.baseUrl, "/").concat(this.settings.ballSprite));
+            this.load.multiatlas('player', "".concat(this.settings.baseUrl, "/player.json"), 'assets');
+            if (this.settings.player.portrait)
+                this.load.image('playerPortrait', 'https://cors-anywhere.herokuapp.com/' + this.settings.player.portrait);
+            this.settings.computerPlayers.forEach(function (cpu, i) {
+                if (cpu.portrait)
+                    _this.load.image('cpuPortrait' + i, 'https://cors-anywhere.herokuapp.com/' + cpu.portrait);
+            });
+        };
+        CyberballScene.prototype.create = function () {
+            var _this = this;
+            this.cameras.main.setBackgroundColor('#ffffff');
+            this.anims.create({
+                key: 'active',
+                frames: this.anims.generateFrameNames('player', { start: 1, end: 1, prefix: 'active/', suffix: '.png' })
+            });
+            this.anims.create({
+                key: 'idle',
+                frames: this.anims.generateFrameNames('player', { start: 1, end: 1, prefix: 'idle/', suffix: '.png' })
+            });
+            this.anims.create({
+                key: 'throw',
+                frameRate: 12,
+                frames: this.anims.generateFrameNames('player', { start: 1, end: 3, prefix: 'throw/', suffix: '.png' })
+            });
+            this.anims.create({
+                key: 'catch',
+                frames: this.anims.generateFrameNames('player', { start: 1, end: 1, prefix: 'catch/', suffix: '.png' })
+            });
+            var playerPosition = this.getPlayerPosition();
+            this.playerGroup = this.physics.add.group({ immovable: true, allowGravity: false });
+            this.playerSprite = this.playerGroup.create(playerPosition.x, playerPosition.y, 'player', 'active/1.png');
+            this.playerSprite.setData('settings', this.settings.player);
+            if (this.settings.player.tint)
+                this.playerSprite.setTint(parseInt(this.settings.player.tint.substr(1), 16));
+            this.playerSprite.setData('name-object', this.add.text(playerPosition.x, playerPosition.y + this.playerSprite.height / 2 + 10, this.settings.player.name, textStyle).setOrigin(0.5));
+            if (this.settings.player.portrait) {
+                var portraitPosition = this.getPlayerPortraitPosition(this.playerSprite);
+                var image = this.add.image(portraitPosition.x, portraitPosition.y, 'playerPortrait');
+                image.setScale(this.settings.portraitHeight / image.height);
+            }
+            if ((this.settings.player.leaveTrigger & leave_trigger_1.LeaveTrigger.Time) === leave_trigger_1.LeaveTrigger.Time) {
+                this.playerSprite.setData('leaveTime', Date.now() + this.getVariantValue(this.settings.player.leaveTime, this.settings.player.leaveTimeVariance) * 1000);
+            }
+            if ((this.settings.player.leaveTrigger & leave_trigger_1.LeaveTrigger.TimeIgnored) === leave_trigger_1.LeaveTrigger.TimeIgnored) {
+                this.playerSprite.setData('leaveTimeIgnored', Date.now() + this.getVariantValue(this.settings.player.leaveTimeIgnored, this.settings.player.leaveTimeIgnoredVariance) * 1000);
+            }
+            var _loop_1 = function (i) {
+                var cpuPosition = this_1.getCPUPosition(i);
+                var cpuSprite = this_1.playerGroup.create(cpuPosition.x, cpuPosition.y, 'player', 'idle/1.png');
+                cpuSprite.setData('name-object', this_1.add.text(cpuPosition.x, cpuPosition.y + cpuSprite.height / 2 + 10, this_1.settings.computerPlayers[i].name, textStyle).setOrigin(0.5));
+                if (this_1.settings.computerPlayers[i].portrait) {
+                    portraitPosition = this_1.getCPUPortraitPosition(i, cpuSprite);
+                    image = this_1.add.image(portraitPosition.x, portraitPosition.y, 'cpuPortrait' + i);
+                    image.setScale(this_1.settings.portraitHeight / image.height);
+                }
+                cpuSprite.flipX = cpuPosition.x > this_1.playerSprite.x;
+                cpuSprite.setData('settings', this_1.settings.computerPlayers[i]);
+                if (this_1.settings.computerPlayers[i].tint)
+                    cpuSprite.setTint(parseInt(this_1.settings.computerPlayers[i].tint.substr(1), 16));
+                cpuSprite.setInteractive();
+                cpuSprite.on('pointerdown', function (e) {
+                    if (_this.playerHasBall) {
+                        _this.playerSprite.flipX = _this.input.x < _this.playerSprite.x;
+                        var ballPosition_1 = _this.getActiveBallPosition(_this.playerSprite);
+                        _this.ballSprite.x = ballPosition_1.x;
+                        _this.ballSprite.y = ballPosition_1.y;
+                        _this.throwBall(_this.playerSprite, cpuSprite);
+                    }
+                });
+                if ((this_1.settings.computerPlayers[i].leaveTrigger & leave_trigger_1.LeaveTrigger.Time) === leave_trigger_1.LeaveTrigger.Time) {
+                    cpuSprite.setData('leaveTime', Date.now() + this_1.getVariantValue(this_1.settings.computerPlayers[i].leaveTime, this_1.settings.computerPlayers[i].leaveTimeVariance) * 1000);
+                }
+                if ((this_1.settings.computerPlayers[i].leaveTrigger & leave_trigger_1.LeaveTrigger.TimeIgnored) === leave_trigger_1.LeaveTrigger.TimeIgnored) {
+                    cpuSprite.setData('leaveTimeIgnored', Date.now() + this_1.getVariantValue(this_1.settings.computerPlayers[i].leaveTimeIgnored, this_1.settings.computerPlayers[i].leaveTimeIgnoredVariance) * 1000);
+                }
+                this_1.cpuSprites.push(cpuSprite);
+            };
+            var this_1 = this, portraitPosition, image;
+            for (var i = 0; i < this.settings.computerPlayers.length; i++) {
+                _loop_1(i);
+            }
+            var ballPosition = this.getActiveBallPosition(this.playerSprite);
+            this.ballSprite = this.physics.add.sprite(ballPosition.x, ballPosition.y, 'ball');
+            if (this.settings.ballTint)
+                this.ballSprite.setTint(parseInt(this.settings.ballTint.substr(1), 16));
+            this.physics.add.overlap(this.ballSprite, this.playerGroup, function (_b, receiver) {
+                if (!_this.ballHeld && receiver === _this.throwTarget)
+                    _this.catchBall(receiver);
+            });
+            this.startTime = Date.now();
+            this.lastTime = this.startTime;
+            if (this.settings.timeLimit > 0 && this.settings.displayTimeLimit) {
+                this.timeLimitText = this.add.text(this.sys.canvas.width - 10, 10, this.getTimeString(), textStyle);
+                this.timeLimitText.setOrigin(1, 0);
+            }
+        };
+        CyberballScene.prototype.update = function () {
+            var _this = this;
+            if (this.gameEnded)
+                return;
+            if (this.playerHasBall) {
+                this.playerSprite.play('active');
+                this.playerSprite.flipX = this.input.x < this.playerSprite.x;
+                var ballPosition = this.getActiveBallPosition(this.playerSprite);
+                this.ballSprite.x = ballPosition.x;
+                this.ballSprite.y = ballPosition.y;
+            }
+            else if (!this.ballHeld) {
+                this.playerGroup.getChildren().forEach(function (c) {
+                    var sprite = c;
+                    if (sprite.frame.name.includes('idle'))
+                        sprite.flipX = _this.ballSprite.x < sprite.x;
+                });
+            }
+            if (!this.showPlayerLeave && (this.settings.player.leaveTrigger & leave_trigger_1.LeaveTrigger.Time) === leave_trigger_1.LeaveTrigger.Time &&
+                Date.now() > this.playerSprite.getData('leaveTime')) {
+                this.showPlayerLeave = true;
+                this.postEvent('player-may-leave', {
+                    reason: 'time elapsed'
+                });
+            }
+            else if (!this.playerHasBall && !this.showPlayerLeave && (this.settings.player.leaveTrigger & leave_trigger_1.LeaveTrigger.TimeIgnored) === leave_trigger_1.LeaveTrigger.TimeIgnored &&
+                Date.now() > this.playerSprite.getData('leaveTimeIgnored')) {
+                this.showPlayerLeave = true;
+                this.postEvent('player-may-leave', {
+                    reason: 'time ignored'
+                });
+            }
+            this.cpuSprites.forEach(function (cpu) {
+                if (cpu == _this.throwTarget || cpu.getData('absent'))
+                    return;
+                var settings = cpu.getData('settings');
+                if ((settings.leaveTrigger & leave_trigger_1.LeaveTrigger.Time) === leave_trigger_1.LeaveTrigger.Time &&
+                    Date.now() > cpu.getData('leaveTime')) {
+                    _this.leaveGame(cpu, 'time elapsed');
+                }
+                else if ((settings.leaveTrigger & leave_trigger_1.LeaveTrigger.TimeIgnored) === leave_trigger_1.LeaveTrigger.TimeIgnored &&
+                    Date.now() > cpu.getData('leaveTimeIgnored')) {
+                    _this.leaveGame(cpu, 'time ignored');
+                }
+            });
+            if (this.settings.timeLimit > 0 && this.settings.displayTimeLimit)
+                this.timeLimitText.setText(this.getTimeString());
+            if (this.settings.timeLimit > 0 && Date.now() - this.startTime > this.settings.timeLimit) {
+                this.postEvent('global-time-limit');
+                this.gameOver();
+            }
+        };
+        CyberballScene.prototype.gameOver = function () {
+            if (this.gameEnded)
+                return;
+            this.gameEnded = true;
+            this.postEvent('game-end');
+            clearTimeout(this.activeTimeout);
+            this.playerGroup.children.each(function (child) { return child.removeAllListeners(); });
+            this.add.rectangle(this.sys.canvas.width / 2, this.sys.canvas.height / 2, this.sys.canvas.width, this.sys.canvas.height, 0xdddddd, this.settings.gameOverOpacity);
+            this.add.text(this.sys.canvas.width / 2, this.sys.canvas.height / 2, this.settings.gameOverText, textStyle).setOrigin(0.5);
+        };
+        CyberballScene.prototype.throwBall = function (thrower, receiver) {
+            this.postEvent('throw', {
+                thrower: thrower.getData('settings').name,
+                receiver: receiver.getData('settings').name,
+                wait: Date.now() - this.lastTime
+            });
+            this.lastTime = Date.now();
+            var throwerSettings = thrower.getData('settings');
+            if ((throwerSettings.leaveTrigger & leave_trigger_1.LeaveTrigger.TimeIgnored) === leave_trigger_1.LeaveTrigger.TimeIgnored) {
+                receiver.setData('leaveTimeIgnored', Date.now() + this.getVariantValue(throwerSettings.leaveTimeIgnored, throwerSettings.leaveTimeIgnoredVariance) * 1000);
+            }
+            this.playerHasBall = this.ballHeld = false;
+            this.throwTarget = receiver;
+            this.throwCount++;
+            thrower.play('throw');
+            thrower.playAfterRepeat('idle');
+            var ballTargetPosition = this.getCaughtBallPosition(receiver);
+            this.physics.moveTo(this.ballSprite, ballTargetPosition.x, ballTargetPosition.y, this.settings.ballSpeed);
+        };
+        CyberballScene.prototype.catchBall = function (receiver) {
+            var _this = this;
+            var _a;
+            this.ballHeld = true;
+            receiver.setData('throwsIgnored', 0);
+            receiver.play('catch');
+            var ballPosition = this.getCaughtBallPosition(receiver);
+            this.ballSprite.body.reset(ballPosition.x, ballPosition.y);
+            if (!this.showPlayerLeave && (this.settings.player.leaveTrigger & leave_trigger_1.LeaveTrigger.Turn) === leave_trigger_1.LeaveTrigger.Turn) {
+                var leaveThrows = this.getVariantValue(this.settings.player.leaveTurn, this.settings.player.leaveTurnVariance);
+                if (this.throwCount >= leaveThrows) {
+                    this.showPlayerLeave = true;
+                    this.postEvent('player-may-leave', {
+                        reason: 'throws elapsed'
+                    });
+                }
+            }
+            else if (!this.showPlayerLeave && (this.settings.player.leaveTrigger & leave_trigger_1.LeaveTrigger.Ignored) === leave_trigger_1.LeaveTrigger.Ignored) {
+                var leaveThrows = this.getVariantValue(this.settings.player.leaveIgnored, this.settings.player.leaveIgnoredVariance);
+                var playerThrowsIgnored = (_a = this.playerSprite.getData('throwsIgnored')) !== null && _a !== void 0 ? _a : 0;
+                if (this.playerSprite != receiver)
+                    this.playerSprite.setData('throwsIgnored', ++playerThrowsIgnored);
+                if (playerThrowsIgnored >= leaveThrows) {
+                    this.showPlayerLeave = true;
+                    this.postEvent('player-may-leave', {
+                        reason: 'throws ignored'
+                    });
+                }
+            }
+            this.cpuSprites.forEach(function (cpu) {
+                var _a;
+                if (cpu == receiver || cpu.getData('absent'))
+                    return;
+                var settings = cpu.getData('settings');
+                var throwsIgnored = ((_a = cpu.getData('throwsIgnored')) !== null && _a !== void 0 ? _a : 0) + 1;
+                cpu.setData('throwsIgnored', throwsIgnored);
+                if ((settings.leaveTrigger & leave_trigger_1.LeaveTrigger.Turn) === leave_trigger_1.LeaveTrigger.Turn) {
+                    var leaveThrows = _this.getVariantValue(settings.leaveTurn, settings.leaveTurnVariance);
+                    if (_this.throwCount >= leaveThrows && _this.checkChance(settings.leaveTurnChance))
+                        _this.leaveGame(cpu, 'throws elapsed');
+                }
+                else if ((settings.leaveTrigger & leave_trigger_1.LeaveTrigger.Ignored) === leave_trigger_1.LeaveTrigger.Ignored) {
+                    var leaveThrows = _this.getVariantValue(settings.leaveIgnored, settings.leaveIgnoredVariance);
+                    if (throwsIgnored >= leaveThrows && _this.checkChance(settings.leaveIgnoredChance))
+                        _this.leaveGame(cpu, 'throws ignored');
+                }
+            });
+            if ((this.settings.useSchedule && this.scheduleIndex === this.settings.schedule.length) ||
+                (this.settings.useSchedule && this.settings.scheduleHonorsThrowCount && this.throwCount >= this.settings.throwCount) ||
+                (!this.settings.useSchedule && this.throwCount >= this.settings.throwCount)) {
+                this.postEvent('throw-count-met');
+                this.gameOver();
+                return;
+            }
+            if (receiver === this.playerSprite) {
+                this.playerHasBall = true;
+            }
+            else {
+                var settings_1 = receiver.getData('settings');
+                this.activeTimeout = setTimeout(function () {
+                    receiver.play('active');
+                    ballPosition = _this.getActiveBallPosition(receiver);
+                    _this.ballSprite.x = ballPosition.x;
+                    _this.ballSprite.y = ballPosition.y;
+                    _this.activeTimeout = setTimeout(function () {
+                        if (_this.settings.useSchedule) {
+                            while (_this.settings.schedule[_this.scheduleIndex] === _this.playerGroup.getChildren().indexOf(receiver) &&
+                                !_this.absentPlayers.includes(_this.settings.schedule[_this.scheduleIndex]))
+                                _this.scheduleIndex++;
+                            _this.throwBall(receiver, _this.playerGroup.getChildren()[_this.settings.schedule[_this.scheduleIndex]]);
+                            _this.scheduleIndex++;
+                        }
+                        else {
+                            var random = Math.random() * 100;
+                            for (var i = 0; i < settings_1.targetPreference.length; i++) {
+                                random -= settings_1.targetPreference[i];
+                                if (random <= 0) {
+                                    if (i >= _this.playerGroup.getChildren().indexOf(receiver))
+                                        i++;
+                                    _this.throwBall(receiver, _this.playerGroup.getChildren()[i]);
+                                    break;
+                                }
+                            }
+                        }
+                    }, _this.getVariantValue(settings_1.throwDelay, settings_1.throwDelayVariance));
+                }, this.getVariantValue(settings_1.catchDelay, settings_1.catchDelayVariance));
+            }
+        };
+        CyberballScene.prototype.leaveGame = function (player, reason) {
+            var _this = this;
+            if (reason === void 0) { reason = ''; }
+            var nameObject = player.getData('name-object');
+            var playerIndex = this.playerGroup.getChildren().indexOf(player);
+            this.absentPlayers.push(playerIndex);
+            player.setData('absent', true);
+            nameObject.setText([nameObject.text, 'has left the game.']);
+            player.removeAllListeners();
+            player.setVisible(false);
+            this.postEvent('leave', {
+                leaver: player.getData('settings').name,
+                reason: reason
+            });
+            console.log('pindex', playerIndex);
+            this.settings.computerPlayers.forEach(function (cpu, i) {
+                if (_this.absentPlayers.includes(i + 1))
+                    return;
+                console.log('distribute before', i, cpu.targetPreference);
+                var targetIndex = playerIndex > (i + 1) ? playerIndex - 1 : playerIndex;
+                var targetWeight = cpu.targetPreference[targetIndex];
+                cpu.targetPreference[targetIndex] = 0;
+                var total = cpu.targetPreference.reduce(function (acc, cur) { return acc + cur; });
+                for (var k = 0; k < cpu.targetPreference.length; k++) {
+                    if (cpu.targetPreference[k] == 0)
+                        continue;
+                    cpu.targetPreference[k] += cpu.targetPreference[k] / total * targetWeight;
+                }
+                console.log('distribute after', i, cpu.targetPreference);
+            });
+            if (this.absentPlayers.length >= this.settings.computerPlayers.length) {
+                this.gameOver();
+                return;
+            }
+            if (!this.showPlayerLeave && (this.settings.player.leaveTrigger & leave_trigger_1.LeaveTrigger.OtherLeaver) === leave_trigger_1.LeaveTrigger.OtherLeaver) {
+                console.log(this.absentPlayers.length, this.settings.player.leaveOtherLeaver);
+                if (this.absentPlayers.length >= this.settings.player.leaveOtherLeaver) {
+                    this.showPlayerLeave = true;
+                    this.postEvent('player-may-leave', {
+                        reason: 'other leavers'
+                    });
+                }
+            }
+            this.cpuSprites.forEach(function (cpu) {
+                var settings = cpu.getData('settings');
+                if (cpu == _this.throwTarget || cpu.getData('absent'))
+                    return;
+                if ((settings.leaveTrigger & leave_trigger_1.LeaveTrigger.OtherLeaver) === leave_trigger_1.LeaveTrigger.OtherLeaver) {
+                    if (_this.absentPlayers.length >= settings.leaveOtherLeaver && _this.checkChance(settings.leaveOtherLeaverChance))
+                        _this.leaveGame(cpu, 'other leavers');
+                }
+            });
+        };
+        CyberballScene.prototype.getCPUPosition = function (i) {
+            var padding = 75;
+            var extraPadding = this.settings.hasPortraits ? this.settings.portraitHeight + this.settings.portraitPadding * 2 : 0;
+            if (this.settings.computerPlayers.length === 1) {
+                return new phaser_1.default.Geom.Point(this.sys.canvas.width / 2, padding + extraPadding);
+            }
+            return new phaser_1.default.Geom.Point(((this.sys.canvas.width - (padding * 2)) / (this.settings.computerPlayers.length - 1)) * i + padding, i === 0 || i === this.settings.computerPlayers.length - 1
+                ? (this.sys.canvas.height / 2)
+                : padding + extraPadding);
+        };
+        CyberballScene.prototype.getCPUPortraitPosition = function (i, sprite) {
+            var position = this.getCPUPosition(i);
+            return new phaser_1.default.Geom.Point(position.x, position.y - this.settings.portraitHeight + this.settings.portraitPadding * 2 - sprite.height / 2);
+        };
+        CyberballScene.prototype.getPlayerPosition = function () {
+            var padding = 75;
+            if (this.settings.hasPortraits)
+                padding += this.settings.portraitHeight + this.settings.portraitPadding * 2;
+            return new phaser_1.default.Geom.Point(this.sys.canvas.width / 2, this.sys.canvas.height - padding);
+        };
+        CyberballScene.prototype.getPlayerPortraitPosition = function (sprite) {
+            var position = this.getPlayerPosition();
+            return new phaser_1.default.Geom.Point(position.x, position.y + this.settings.portraitHeight / 2 + this.settings.portraitPadding * 2 + sprite.height / 2 + 10);
+        };
+        CyberballScene.prototype.getCaughtBallPosition = function (target) {
+            return new phaser_1.default.Geom.Point(target.x + (target.flipX ? -50 : 50), target.y - 15);
+        };
+        CyberballScene.prototype.getActiveBallPosition = function (target) {
+            return new phaser_1.default.Geom.Point(target.x + (target.flipX ? 40 : -40), target.y - 20);
+        };
+        CyberballScene.prototype.getVariantValue = function (base, variance) {
+            return base + (phaser_1.default.Math.RND.between(0, variance) * phaser_1.default.Math.RND.sign());
+        };
+        CyberballScene.prototype.checkChance = function (chance) {
+            return phaser_1.default.Math.RND.between(0, 100) <= chance;
+        };
+        CyberballScene.prototype.getTimeString = function () {
+            var timeRemaining = this.settings.timeLimit - (Date.now() - this.startTime);
+            var time = new Date(timeRemaining < 0 ? 0 : timeRemaining);
+            return "".concat(this.settings.timeLimitText, " ").concat(time.getUTCMinutes(), ":").concat(time.getUTCSeconds() < 10 ? '0' : '').concat(time.getUTCSeconds());
+        };
+        CyberballScene.prototype.postEvent = function (type, data) {
+            if (data === void 0) { data = {}; }
+            console.log('post event: ' + type, data);
+            window.parent.postMessage(__assign({ type: type }, data), '*');
+        };
+        return CyberballScene;
+    }(phaser_1.default.Scene));
+    exports.CyberballScene = CyberballScene;
+});
+;
+define('resources',['resources/index'],function(m){return m;});
+//# sourceMappingURL=app-bundle.js.map

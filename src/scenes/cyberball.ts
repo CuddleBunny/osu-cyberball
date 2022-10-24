@@ -1,20 +1,23 @@
+import { Player } from './../models/player-model';
 import { LeaveTrigger } from 'enums/leave-trigger';
 import { SettingsModel } from './../models/settings-model';
 import Phaser from 'phaser';
-import { CPUModel } from 'models/cpu-model';
+import { CpuSettingsModel } from 'models/cpu-settings-model';
 
 const textStyle = { fontFamily: 'Arial', color: '#000000' };
 
 
 export class CyberballScene extends Phaser.Scene {
-    private settings: SettingsModel;
+    public settings: SettingsModel;
 
     // Game Objects:
+    private player: Player;
 
     private ballSprite: Phaser.GameObjects.Sprite;
     private playerSprite: Phaser.GameObjects.Sprite;
     private playerGroup: Phaser.Physics.Arcade.Group;
     private cpuSprites: Phaser.GameObjects.Sprite[] = [];
+    private timeLimitText: Phaser.GameObjects.Text;
 
     // Gameplay Mechanics:
 
@@ -33,8 +36,8 @@ export class CyberballScene extends Phaser.Scene {
 
     private throwCount = 0;
     private scheduleIndex = 0;
-    private lastTime = Date.now();
-    private readonly startTime = Date.now();
+    private lastTime: number;
+    private startTime: number;
 
     constructor(settings: SettingsModel) {
         super({});
@@ -105,13 +108,11 @@ export class CyberballScene extends Phaser.Scene {
         }
 
         if((this.settings.player.leaveTrigger & LeaveTrigger.Time) === LeaveTrigger.Time) {
-            this.playerSprite.setData('leaveTime', Date.now() + this.getVariantValue(this.settings.player.leaveIgnored, this.settings.player.leaveIgnoredVariance) * 1000);
+            this.playerSprite.setData('leaveTime', Date.now() + this.getVariantValue(this.settings.player.leaveTime, this.settings.player.leaveTimeVariance) * 1000);
         }
 
         if((this.settings.player.leaveTrigger & LeaveTrigger.TimeIgnored) === LeaveTrigger.TimeIgnored) {
             this.playerSprite.setData('leaveTimeIgnored', Date.now() + this.getVariantValue(this.settings.player.leaveTimeIgnored, this.settings.player.leaveTimeIgnoredVariance) * 1000);
-            console.log(Date.now(), this.playerSprite.getData('leaveTimeIgnored') - Date.now())
-
         }
 
         // CPU:
@@ -129,7 +130,7 @@ export class CyberballScene extends Phaser.Scene {
                 image.setScale(this.settings.portraitHeight / image.height);
             }
 
-            cpuSprite.flipX = cpuPosition.x > playerPosition.x;
+            cpuSprite.flipX = cpuPosition.x > this.playerSprite.x;
             cpuSprite.setData('settings', this.settings.computerPlayers[i]);
 
             if(this.settings.computerPlayers[i].tint)
@@ -150,7 +151,7 @@ export class CyberballScene extends Phaser.Scene {
             });
 
             if((this.settings.computerPlayers[i].leaveTrigger & LeaveTrigger.Time) === LeaveTrigger.Time) {
-                cpuSprite.setData('leaveTime', Date.now() + this.getVariantValue(this.settings.computerPlayers[i].leaveIgnored, this.settings.computerPlayers[i].leaveIgnoredVariance) * 1000);
+                cpuSprite.setData('leaveTime', Date.now() + this.getVariantValue(this.settings.computerPlayers[i].leaveTime, this.settings.computerPlayers[i].leaveTimeVariance) * 1000);
             }
 
             if((this.settings.computerPlayers[i].leaveTrigger & LeaveTrigger.TimeIgnored) === LeaveTrigger.TimeIgnored) {
@@ -172,9 +173,22 @@ export class CyberballScene extends Phaser.Scene {
             if (!this.ballHeld && receiver === this.throwTarget)
                 this.catchBall(receiver as Phaser.GameObjects.Sprite);
         });
+
+        // Time Limit:
+
+        this.startTime = Date.now();
+        this.lastTime = this.startTime;
+
+        if (this.settings.timeLimit > 0 && this.settings.displayTimeLimit) {
+            this.timeLimitText = this.add.text(this.sys.canvas.width - 10, 10, this.getTimeString(), textStyle);
+            this.timeLimitText.setOrigin(1, 0);
+        }
     }
 
     public update() {
+        if(this.gameEnded)
+            return;
+
         if (this.playerHasBall) {
             this.playerSprite.play('active');
             this.playerSprite.flipX = this.input.x < this.playerSprite.x;
@@ -215,7 +229,7 @@ export class CyberballScene extends Phaser.Scene {
             if (cpu == this.throwTarget || cpu.getData('absent'))
                 return;
 
-            let settings = cpu.getData('settings') as CPUModel;
+            let settings = cpu.getData('settings') as CpuSettingsModel;
 
             // CPU may leave after some time
             if((settings.leaveTrigger & LeaveTrigger.Time) === LeaveTrigger.Time &&
@@ -228,6 +242,16 @@ export class CyberballScene extends Phaser.Scene {
                 this.leaveGame(cpu, 'time ignored');
             }
         });
+
+        // Time Limit:
+
+        if (this.settings.timeLimit > 0 && this.settings.displayTimeLimit)
+            this.timeLimitText.setText(this.getTimeString());
+
+        if (this.settings.timeLimit > 0 && Date.now() - this.startTime > this.settings.timeLimit) {
+            this.postEvent('global-time-limit');
+            this.gameOver();
+        }
     }
 
     public gameOver() {
@@ -243,7 +267,7 @@ export class CyberballScene extends Phaser.Scene {
         this.playerGroup.children.each(child => child.removeAllListeners());
 
         // Draw game over screen:
-        this.add.rectangle(this.sys.canvas.width / 2, this.sys.canvas.height / 2, this.sys.canvas.width, this.sys.canvas.height, 0xdddddd, 0.5);
+        this.add.rectangle(this.sys.canvas.width / 2, this.sys.canvas.height / 2, this.sys.canvas.width, this.sys.canvas.height, 0xdddddd, this.settings.gameOverOpacity);
         this.add.text(this.sys.canvas.width / 2, this.sys.canvas.height / 2, this.settings.gameOverText, textStyle).setOrigin(0.5);
     }
 
@@ -333,7 +357,7 @@ export class CyberballScene extends Phaser.Scene {
             if (cpu == receiver || cpu.getData('absent'))
                 return;
 
-            let settings = cpu.getData('settings') as CPUModel;
+            let settings = cpu.getData('settings') as CpuSettingsModel;
             let throwsIgnored = (cpu.getData('throwsIgnored') ?? 0) + 1;
             cpu.setData('throwsIgnored', throwsIgnored);
 
@@ -360,6 +384,7 @@ export class CyberballScene extends Phaser.Scene {
             (this.settings.useSchedule && this.settings.scheduleHonorsThrowCount && this.throwCount >= this.settings.throwCount) ||
             (!this.settings.useSchedule && this.throwCount >= this.settings.throwCount)
         ) {
+            this.postEvent('throw-count-met');
             this.gameOver();
             return;
         }
@@ -369,7 +394,7 @@ export class CyberballScene extends Phaser.Scene {
         if (receiver === this.playerSprite) {
             this.playerHasBall = true;
         } else {
-            let settings = receiver.getData('settings') as CPUModel;
+            let settings = receiver.getData('settings') as CpuSettingsModel;
 
             this.activeTimeout = setTimeout(() => {
                 receiver.play('active');
@@ -473,7 +498,7 @@ export class CyberballScene extends Phaser.Scene {
         }
 
         this.cpuSprites.forEach(cpu => {
-            let settings = cpu.getData('settings') as CPUModel;
+            let settings = cpu.getData('settings') as CpuSettingsModel;
 
             // CPU shouldn't leave if they:
             //  - have the ball
@@ -542,10 +567,12 @@ export class CyberballScene extends Phaser.Scene {
         );
     }
 
+    // TODO: This is invalid if the sprites are changed.
     getCaughtBallPosition(target: Phaser.GameObjects.Sprite) {
         return new Phaser.Geom.Point(target.x + (target.flipX ? -50 : 50), target.y - 15);
     }
 
+    // TODO: This is invalid if the sprites are changed.
     getActiveBallPosition(target: Phaser.GameObjects.Sprite) {
         return new Phaser.Geom.Point(target.x + (target.flipX ? 40 : -40), target.y - 20);
     }
@@ -556,6 +583,13 @@ export class CyberballScene extends Phaser.Scene {
 
     checkChance(chance: number): boolean {
         return Phaser.Math.RND.between(0, 100) <= chance;
+    }
+
+    getTimeString(): string {
+        let timeRemaining = this.settings.timeLimit - (Date.now() - this.startTime);
+        let time = new Date(timeRemaining < 0 ? 0 : timeRemaining);
+
+        return `${this.settings.timeLimitText} ${time.getUTCMinutes()}:${time.getUTCSeconds() < 10 ? '0' : ''}${time.getUTCSeconds()}`;
     }
 
     postEvent(type: string, data: any = {}): void {

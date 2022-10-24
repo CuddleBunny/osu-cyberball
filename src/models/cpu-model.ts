@@ -1,34 +1,12 @@
-import { BanterModel } from './banter-model';
-import { PlayerModel } from './player-model';
+import { CyberballScene } from 'scenes/cyberball';
+import { CpuSettingsModel } from './cpu-settings-model';
+import { Player } from "./player-model";
 
-export class CPUModel extends PlayerModel {
-    // A set of weights for each possible target, adding up to 100%.
-    targetPreference: Array<number> = [50, 50];
+// TODO: WIP isolate game logic into more classes.
+export class Cpu extends Player {
+    public settings: CpuSettingsModel;
 
-    throwDelay: number = 500;
-    throwDelayVariance: number = 200;
-
-    catchDelay: number = 500;
-    catchDelayVariance: number = 200;
-
-    introductionBanter?: BanterModel;
-    throwBanter?: BanterModel
-    catchBanter?: BanterModel
-    leftOutBanter?: BanterModel
-
-    boredomBanterThreshold?: number;
-    boredomBanter?: BanterModel;
-
-    leaveTurnChance?: number = 100;
-    leaveTimeChance?: number = 100;
-    leaveIgnoredChance?: number = 100;
-    leaveTimeIgnoredChance?: number = 100;
-    leaveOtherLeaverChance?: number = 50;
-
-    constructor(init?: Partial<CPUModel>) {
-        super();
-
-        if(init)
-            Object.assign(this, init);
+    constructor(settings: CpuSettingsModel, gameReference: CyberballScene) {
+        super(settings, gameReference);
     }
 }

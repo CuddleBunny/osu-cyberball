@@ -1,12 +1,15 @@
-import { PlayerModel } from './player-model';
-import { CPUModel } from './cpu-model';
+import { PlayerSettingsModel } from './player-settings-model';
+import { CpuSettingsModel } from './cpu-settings-model';
 
 export class SettingsModel {
-    player: PlayerModel = new PlayerModel();
-    computerPlayers: Array<CPUModel>;
+    player: PlayerSettingsModel = new PlayerSettingsModel();
+    computerPlayers: Array<CpuSettingsModel>;
 
     // Gameplay
     throwCount: number = 10;
+    timeLimit: number = 0;
+    displayTimeLimit: boolean = false;
+    timeLimitText: string = 'Time Limit:';
     ballSpeed: number = 500;
 
     useSchedule: boolean = false;
@@ -32,6 +35,7 @@ export class SettingsModel {
     chatEnabled: boolean = false;
 
     gameOverText: string = "Game Over";
+    gameOverOpacity: number = 0.5;
 
     constructor(init?: Partial<SettingsModel>) {
         Object.assign(this, init);
@@ -39,14 +43,14 @@ export class SettingsModel {
 }
 
 export const defaultSettings = new SettingsModel({
-    player: new PlayerModel({
+    player: new PlayerSettingsModel({
        name: 'Player 1'
     }),
     computerPlayers: [
-        new CPUModel({
+        new CpuSettingsModel({
             name: 'Player 2'
         }),
-        new CPUModel({
+        new CpuSettingsModel({
             name: 'Player 3'
         })
     ]
