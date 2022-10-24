@@ -1,6 +1,7 @@
 <template>
     <require from="resources/value-converters/json-value-converter"></require>
     <require from="resources/value-converters/integer-value-converter"></require>
+    <require from="resources/value-converters/number-value-converter"></require>
     <require from="resources/value-converters/integer-array-value-converter"></require>
     <require from="resources/value-converters/flag-value-converter"></require>
 
@@ -295,8 +296,8 @@
             </div>
 
             <div class="input">
-                <label>Game Over Opacity (number between 0 and 1)</label>
-                <input type="number" min="0" max="1" step="0.1" value.bind="settings.gameOverOpacity" />
+                <label>Game Over Opacity</label>
+                <input type="number" min="0" max="1" step="0.1" value.bind="settings.gameOverOpacity | number" />
             </div>
 
             <button click.delegate="saveSettings()">Save</button>
