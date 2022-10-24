@@ -32,6 +32,7 @@ export class SettingsModel {
     chatEnabled: boolean = false;
 
     gameOverText: string = "Game Over";
+    gameOverOpacity: number = 0.5;
 
     constructor(init?: Partial<SettingsModel>) {
         Object.assign(this, init);

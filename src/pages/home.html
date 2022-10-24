@@ -294,6 +294,11 @@
                 <input type="text" value.bind="settings.gameOverText" />
             </div>
 
+            <div class="input">
+                <label>Game Over Opacity (number between 0 and 1)</label>
+                <input type="number" min="0" max="1" step="0.1" value.bind="settings.gameOverOpacity" />
+            </div>
+
             <button click.delegate="saveSettings()">Save</button>
         </div>
 
