@@ -1,5 +1,5 @@
 export class NumberValueConverter {
     fromView(value) {
-        return parseFloat(value);
+        return parseFloat(value ?? '0');
     }
 }

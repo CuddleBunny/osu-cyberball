@@ -20,6 +20,16 @@ define('app',["require", "exports"], function (require, exports) {
 });
 ;
 define('text!app.html',[],function(){return "<template>\n    <router-view></router-view>\n</template>\n";});;
+define('behaviors/get-variant-value',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.getVariantValue = void 0;
+    function getVariantValue(base, variance) {
+        return base + (Phaser.Math.RND.between(0, variance) * Phaser.Math.RND.sign());
+    }
+    exports.getVariantValue = getVariantValue;
+});
+;
 define('enums/leave-trigger',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -109,10 +119,39 @@ var __extends = (this && this.__extends) || (function () {
 define('models/cpu-model',["require", "exports", "./player-model"], function (require, exports, player_model_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.CPUModel = void 0;
-    var CPUModel = (function (_super) {
-        __extends(CPUModel, _super);
-        function CPUModel(init) {
+    exports.Cpu = void 0;
+    var Cpu = (function (_super) {
+        __extends(Cpu, _super);
+        function Cpu(settings, gameReference) {
+            return _super.call(this, settings, gameReference) || this;
+        }
+        return Cpu;
+    }(player_model_1.Player));
+    exports.Cpu = Cpu;
+});
+;
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+define('models/cpu-settings-model',["require", "exports", "./player-settings-model"], function (require, exports, player_settings_model_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.CpuSettingsModel = void 0;
+    var CpuSettingsModel = (function (_super) {
+        __extends(CpuSettingsModel, _super);
+        function CpuSettingsModel(init) {
             var _this = _super.call(this) || this;
             _this.targetPreference = [50, 50];
             _this.throwDelay = 500;
@@ -128,17 +167,60 @@ define('models/cpu-model',["require", "exports", "./player-model"], function (re
                 Object.assign(_this, init);
             return _this;
         }
-        return CPUModel;
-    }(player_model_1.PlayerModel));
-    exports.CPUModel = CPUModel;
+        return CpuSettingsModel;
+    }(player_settings_model_1.PlayerSettingsModel));
+    exports.CpuSettingsModel = CpuSettingsModel;
 });
 ;
-define('models/player-model',["require", "exports", "enums/leave-trigger"], function (require, exports, leave_trigger_1) {
+define('models/player-model',["require", "exports", "./../behaviors/get-variant-value", "enums/leave-trigger"], function (require, exports, get_variant_value_1, leave_trigger_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.PlayerModel = void 0;
-    var PlayerModel = (function () {
-        function PlayerModel(init) {
+    exports.Player = void 0;
+    var Player = (function () {
+        function Player(settings, gameReference) {
+            this.hasBall = false;
+            this.settings = settings;
+            this.gameReference = gameReference;
+        }
+        Player.prototype.create = function () {
+            var position = this.getPosition();
+            this.group = this.gameReference.physics.add.group({ immovable: true, allowGravity: false });
+            this.sprite = this.group.create(position.x, position.y, 'player', 'active/1.png');
+            if (this.settings.tint)
+                this.sprite.setTint(parseInt(this.settings.tint.substring(1), 16));
+            this.nameText = this.gameReference.add.text(position.x, position.y + this.sprite.height / 2 + 10, this.settings.name, { fontFamily: 'Arial', color: '#000000' }).setOrigin(0.5);
+            if (this.settings.portrait) {
+                var portraitPosition = this.getPortraitPosition();
+                this.portrait = this.gameReference.add.image(portraitPosition.x, portraitPosition.y, 'playerPortrait');
+            }
+            if ((this.settings.leaveTrigger & leave_trigger_1.LeaveTrigger.Time) === leave_trigger_1.LeaveTrigger.Time) {
+                this.leaveTimeThreshold = Date.now() + (0, get_variant_value_1.getVariantValue)(this.settings.leaveTime, this.settings.leaveTimeVariance) * 1000;
+            }
+            if ((this.settings.leaveTrigger & leave_trigger_1.LeaveTrigger.TimeIgnored) === leave_trigger_1.LeaveTrigger.TimeIgnored) {
+                this.leaveIgnoreTimeThreshold = Date.now() + (0, get_variant_value_1.getVariantValue)(this.settings.leaveTimeIgnored, this.settings.leaveTimeIgnoredVariance) * 1000;
+            }
+        };
+        Player.prototype.getPosition = function () {
+            var padding = 75;
+            if (this.gameReference.settings.hasPortraits)
+                padding += this.gameReference.settings.portraitHeight + this.gameReference.settings.portraitPadding * 2;
+            return new Phaser.Geom.Point(this.gameReference.sys.canvas.width / 2, this.gameReference.sys.canvas.height - padding);
+        };
+        Player.prototype.getPortraitPosition = function () {
+            var position = this.getPosition();
+            return new Phaser.Geom.Point(position.x, position.y + this.gameReference.settings.portraitHeight / 2 + this.gameReference.settings.portraitPadding * 2 + this.sprite.height / 2 + 10);
+        };
+        return Player;
+    }());
+    exports.Player = Player;
+});
+;
+define('models/player-settings-model',["require", "exports", "enums/leave-trigger"], function (require, exports, leave_trigger_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.PlayerSettingsModel = void 0;
+    var PlayerSettingsModel = (function () {
+        function PlayerSettingsModel(init) {
             this.leaveTrigger = leave_trigger_1.LeaveTrigger.None;
             this.leaveTurn = 10;
             this.leaveTurnVariance = 2;
@@ -152,19 +234,22 @@ define('models/player-model',["require", "exports", "enums/leave-trigger"], func
             if (init)
                 Object.assign(this, init);
         }
-        return PlayerModel;
+        return PlayerSettingsModel;
     }());
-    exports.PlayerModel = PlayerModel;
+    exports.PlayerSettingsModel = PlayerSettingsModel;
 });
 ;
-define('models/settings-model',["require", "exports", "./player-model", "./cpu-model"], function (require, exports, player_model_1, cpu_model_1) {
+define('models/settings-model',["require", "exports", "./player-settings-model", "./cpu-settings-model"], function (require, exports, player_settings_model_1, cpu_settings_model_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.defaultSettings = exports.SettingsModel = void 0;
     var SettingsModel = (function () {
         function SettingsModel(init) {
-            this.player = new player_model_1.PlayerModel();
+            this.player = new player_settings_model_1.PlayerSettingsModel();
             this.throwCount = 10;
+            this.timeLimit = 0;
+            this.displayTimeLimit = false;
+            this.timeLimitText = 'Time Limit:';
             this.ballSpeed = 500;
             this.useSchedule = false;
             this.scheduleHonorsThrowCount = false;
@@ -191,14 +276,14 @@ define('models/settings-model',["require", "exports", "./player-model", "./cpu-m
     }());
     exports.SettingsModel = SettingsModel;
     exports.defaultSettings = new SettingsModel({
-        player: new player_model_1.PlayerModel({
+        player: new player_settings_model_1.PlayerSettingsModel({
             name: 'Player 1'
         }),
         computerPlayers: [
-            new cpu_model_1.CPUModel({
+            new cpu_settings_model_1.CpuSettingsModel({
                 name: 'Player 2'
             }),
-            new cpu_model_1.CPUModel({
+            new cpu_settings_model_1.CpuSettingsModel({
                 name: 'Player 3'
             })
         ]
@@ -268,7 +353,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-define('pages/home',["require", "exports", "aurelia-templating-resources", "aurelia-framework", "models/settings-model", "models/cpu-model", "clipboard"], function (require, exports, aurelia_templating_resources_1, aurelia_framework_1, settings_model_1, cpu_model_1, clipboard_1) {
+define('pages/home',["require", "exports", "aurelia-templating-resources", "aurelia-framework", "models/settings-model", "models/cpu-settings-model", "clipboard"], function (require, exports, aurelia_templating_resources_1, aurelia_framework_1, settings_model_1, cpu_settings_model_1, clipboard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.HomeViewModel = void 0;
@@ -286,7 +371,7 @@ define('pages/home',["require", "exports", "aurelia-templating-resources", "aure
         };
         HomeViewModel.prototype.addCPU = function () {
             var _this = this;
-            this.settings.computerPlayers.push(new cpu_model_1.CPUModel({
+            this.settings.computerPlayers.push(new cpu_settings_model_1.CpuSettingsModel({
                 name: "Player ".concat(this.settings.computerPlayers.length + 2)
             }));
             this.settings.computerPlayers.forEach(function (cpu) {
@@ -325,7 +410,7 @@ define('pages/home',["require", "exports", "aurelia-templating-resources", "aure
     exports.HomeViewModel = HomeViewModel;
 });
 ;
-define('text!pages/home.html',[],function(){return "<template>\n    <require from=\"resources/value-converters/json-value-converter\"></require>\n    <require from=\"resources/value-converters/integer-value-converter\"></require>\n    <require from=\"resources/value-converters/number-value-converter\"></require>\n    <require from=\"resources/value-converters/integer-array-value-converter\"></require>\n    <require from=\"resources/value-converters/flag-value-converter\"></require>\n\n    <style>\n        body {\n            background: #111;\n            color: #eee;\n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n        }\n\n        .input {\n            display: flex;\n            margin-bottom: 5px;\n        }\n\n        .input label {\n            width: 180px;\n        }\n\n        .input label + * {\n            box-sizing: border-box;\n            max-width: 300px;\n        }\n\n        .input input[type=text], .input input[type=number], textarea {\n            flex: 1 1 100%;\n            min-width: 0;\n            width: auto;\n        }\n\n        .column {\n            display: flex;\n            flex-direction: column;\n        }\n\n        .input > div {\n            display: flex;\n        }\n\n        pre {\n            max-width: 100%;\n            overflow-x: auto;\n        }\n    </style>\n\n    <div style=\"display: flex;\">\n        <div style=\"margin-right: 20px;\">\n            <h1>Cyberball Configuration Builder</h1>\n\n            <h2>Player</h2>\n\n            <div class=\"input\">\n                <label>Name</label>\n                <input type=\"text\" value.bind=\"settings.player.name\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Tint Color</label>\n                <input type=\"color\" value.bind=\"settings.player.tint\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Portrait</label>\n                <input type=\"text\" value.bind=\"settings.player.portrait\" />\n            </div>\n\n            <div>Leave Triggers</div>\n            <div class=\"column\">\n                <label>\n                    <input type=\"checkbox\" checked.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:1\" /> Throws Elapsed\n                </label>\n                <label>\n                    <input type=\"checkbox\" checked.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:2\" /> Time Elapsed\n                </label>\n                <label>\n                    <input type=\"checkbox\" checked.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:4\" /> Throws Ignored\n                </label>\n                <label>\n                    <input type=\"checkbox\" checked.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:16\" /> Time Ignored\n                </label>\n                <label>\n                    <input type=\"checkbox\" checked.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:8\" /> Other Players Leaving\n                </label>\n            </div>\n\n            <div class=\"column\" if.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:1\">\n                <label>Throws Elapsed Leave Threshold/Variance</label>\n\n                <div>\n                    <input type=\"number\" value.bind=\"settings.player.leaveTurn | integer\" />\n                    <input type=\"number\" value.bind=\"settings.player.leaveTurnVariance | integer\" />\n                </div>\n            </div>\n\n            <div class=\"column\" if.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:2\">\n                <label>Time Elapsed Leave Threshold/Variance</label>\n\n                <div>\n                    <input type=\"number\" value.bind=\"settings.player.leaveTime | integer\" />\n                    <input type=\"number\" value.bind=\"settings.player.leaveTimeVariance | integer\" />\n                </div>\n            </div>\n\n            <div class=\"column\" if.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:4\">\n                <label>Ignored Throws Leave Threshold/Variance</label>\n\n                <div>\n                    <input type=\"number\" value.bind=\"settings.player.leaveIgnored | integer\" />\n                    <input type=\"number\" value.bind=\"settings.player.leaveIgnoredVariance | integer\" />\n                </div>\n            </div>\n\n            <div class=\"column\" if.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:16\">\n                <label>Ignored Time Leave Threshold/Variance</label>\n\n                <div>\n                    <input type=\"number\" value.bind=\"settings.player.leaveTimeIgnored | integer\" />\n                    <input type=\"number\" value.bind=\"settings.player.leaveTimeIgnoredVariance | integer\" />\n                </div>\n            </div>\n\n            <div class=\"column\" if.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:8\">\n                <label>Others Left Leave Threshold</label>\n\n                <div>\n                    <input type=\"number\" value.bind=\"settings.player.leaveOtherLeaver | integer\" />\n                </div>\n            </div>\n\n            <h2>\n                CPUs\n                <button click.delegate=\"addCPU()\">+ Add CPU</button>\n                <button click.delegate=\"removeCPU()\">- Remove CPU</button>\n            </h2>\n\n            <div repeat.for=\"cpu of settings.computerPlayers\">\n                <div class=\"input\">\n                    <label>Name</label>\n                    <input type=\"text\" value.bind=\"cpu.name\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Tint Color</label>\n                    <input type=\"color\" value.bind=\"cpu.tint\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Portrait</label>\n                    <input type=\"text\" value.bind=\"cpu.portrait\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Throw Delay</label>\n                    <input type=\"number\" value.bind=\"cpu.throwDelay | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Throw Delay Variance</label>\n                    <input type=\"number\" value.bind=\"cpu.throwDelayVariance | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Catch Delay</label>\n                    <input type=\"number\" value.bind=\"cpu.catchDelay | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Catch Delay Variance</label>\n                    <input type=\"number\" value.bind=\"cpu.catchDelayVariance | integer\" />\n                </div>\n\n\n                <div class=\"input\">\n                    <label>Target Preference</label>\n\n                    <div>\n                        <input repeat.for=\"target of cpu.targetPreference\" type=\"number\" value.bind=\"cpu.targetPreference[$index] | integer\" />\n                    </div>\n                </div>\n\n                <div>Leave Triggers</div>\n                <div class=\"column\">\n                    <label>\n                        <input type=\"checkbox\" checked.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:1\" /> Throws Elapsed\n                    </label>\n                    <label>\n                        <input type=\"checkbox\" checked.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:2\" /> Time Elapsed\n                    </label>\n                    <label>\n                        <input type=\"checkbox\" checked.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:4\" /> Throws Ignored\n                    </label>\n                    <label>\n                        <input type=\"checkbox\" checked.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:16\" /> Time Ignored\n                    </label>\n                    <label>\n                        <input type=\"checkbox\" checked.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:8\" /> Other Players Leaving\n                    </label>\n                </div>\n\n                <div class=\"column\" if.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:1\">\n                    <label>Throws Elapsed Leave Threshold/Variance/Chance</label>\n\n                    <div>\n                        <input type=\"number\" value.bind=\"cpu.leaveTurn | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveTurnVariance | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveTurnChance | integer\" />\n                    </div>\n                </div>\n\n                <div class=\"column\" if.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:2\">\n                    <label>Time Elapsed Leave Threshold/Variance/Chance</label>\n\n                    <div>\n                        <input type=\"number\" value.bind=\"cpu.leaveTime | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveTimeVariance | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveTimeChance | integer\" />\n                    </div>\n                </div>\n\n                <div class=\"column\" if.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:4\">\n                    <label>Ignored Throws Leave Threshold/Variance/Chance</label>\n\n                    <div>\n                        <input type=\"number\" value.bind=\"cpu.leaveIgnored | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveIgnoredVariance | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveIgnoredChance | integer\" />\n                    </div>\n                </div>\n\n                <div class=\"column\" if.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:16\">\n                    <label>Ignored Time Leave Threshold/Variance/Chance</label>\n\n                    <div>\n                        <input type=\"number\" value.bind=\"cpu.leaveTimeIgnored | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveTimeIgnoredVariance | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveTimeIgnoredChance | integer\" />\n                    </div>\n                </div>\n\n                <div class=\"column\" if.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:8\">\n                    <label>Others Left Leave Threshold/Chance</label>\n\n                    <div>\n                        <input type=\"number\" value.bind=\"cpu.leaveOtherLeaver | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveOtherLeaverChance | integer\" />\n                    </div>\n                </div>\n\n                <hr />\n            </div>\n\n            <h2>Gameplay</h2>\n\n            <div class=\"input\">\n                <label>Throw Count</label>\n                <input type=\"number\" value.bind=\"settings.throwCount | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Ball Speed</label>\n                <input type=\"number\" value.bind=\"settings.ballSpeed | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Ball Tint Color</label>\n                <input type=\"color\" value.bind=\"settings.ballTint\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Portrait Height</label>\n                <input type=\"number\" value.bind=\"settings.portraitHeight | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Use Schedule</label>\n                <input type=\"checkbox\" checked.bind=\"settings.useSchedule\" />\n            </div>\n\n            <div class=\"input\" if.bind=\"settings.useSchedule\">\n                <label>Schedule</label>\n                <textarea value.bind=\"settings.schedule | integerArray & updateTrigger:'blur'\"></textarea>\n            </div>\n\n            <div class=\"input\">\n                <label>Schedule Honors Throw Count</label>\n                <input type=\"checkbox\" checked.bind=\"settings.scheduleHonorsThrowCount\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Game Over Text</label>\n                <input type=\"text\" value.bind=\"settings.gameOverText\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Game Over Opacity</label>\n                <input type=\"number\" min=\"0\" max=\"1\" step=\"0.1\" value.bind=\"settings.gameOverOpacity | number\" />\n            </div>\n\n            <button click.delegate=\"saveSettings()\">Save</button>\n        </div>\n\n        <div style=\"overflow-y: auto;\">\n            <pre>${settings | json & signal: 'save-settings'}</pre>\n        </div>\n    </div>\n\n    <div>\n        <h1>\n            Code\n            <button id=\"copy\" data-clipboard-target=\"#code\">&#10697; Copy</button>\n            <button click.delegate=\"testGame()\">&#129514; Test</button>\n        </h1>\n        <pre id=\"code\">&lt;iframe id=\"cyberball\" width=\"100%\" height=\"580\" src=\"${url}\"&gt;&lt;/iframe&gt;</pre>\n    </div>\n</template>\n";});;
+define('text!pages/home.html',[],function(){return "<template>\n    <require from=\"resources/value-converters/json-value-converter\"></require>\n    <require from=\"resources/value-converters/integer-value-converter\"></require>\n    <require from=\"resources/value-converters/number-value-converter\"></require>\n    <require from=\"resources/value-converters/integer-array-value-converter\"></require>\n    <require from=\"resources/value-converters/flag-value-converter\"></require>\n\n    <style>\n        body {\n            background: #111;\n            color: #eee;\n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n        }\n\n        .input {\n            display: flex;\n            margin-bottom: 5px;\n        }\n\n        .input label {\n            width: 180px;\n        }\n\n        .input label + * {\n            box-sizing: border-box;\n            max-width: 300px;\n        }\n\n        .input input[type=text], .input input[type=number], textarea {\n            flex: 1 1 100%;\n            min-width: 0;\n            width: auto;\n        }\n\n        .column {\n            display: flex;\n            flex-direction: column;\n        }\n\n        .input > div {\n            display: flex;\n        }\n\n        pre {\n            max-width: 100%;\n            overflow-x: auto;\n        }\n    </style>\n\n    <div style=\"display: flex;\">\n        <div style=\"margin-right: 20px;\">\n            <h1>Cyberball Configuration Builder</h1>\n\n            <h2>Player</h2>\n\n            <div class=\"input\">\n                <label>Name</label>\n                <input type=\"text\" value.bind=\"settings.player.name\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Tint Color</label>\n                <input type=\"color\" value.bind=\"settings.player.tint\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Portrait</label>\n                <input type=\"text\" value.bind=\"settings.player.portrait\" />\n            </div>\n\n            <div>Leave Triggers</div>\n            <div class=\"column\">\n                <label>\n                    <input type=\"checkbox\" checked.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:1\" /> Throws Elapsed\n                </label>\n                <label>\n                    <input type=\"checkbox\" checked.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:2\" /> Time Elapsed\n                </label>\n                <label>\n                    <input type=\"checkbox\" checked.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:4\" /> Throws Ignored\n                </label>\n                <label>\n                    <input type=\"checkbox\" checked.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:16\" /> Time Ignored\n                </label>\n                <label>\n                    <input type=\"checkbox\" checked.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:8\" /> Other Players Leaving\n                </label>\n            </div>\n\n            <div class=\"column\" if.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:1\">\n                <label>Throws Elapsed Leave Threshold/Variance</label>\n\n                <div>\n                    <input type=\"number\" value.bind=\"settings.player.leaveTurn | integer\" />\n                    <input type=\"number\" value.bind=\"settings.player.leaveTurnVariance | integer\" />\n                </div>\n            </div>\n\n            <div class=\"column\" if.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:2\">\n                <label>Time Elapsed Leave Threshold/Variance</label>\n\n                <div>\n                    <input type=\"number\" value.bind=\"settings.player.leaveTime | integer\" />\n                    <input type=\"number\" value.bind=\"settings.player.leaveTimeVariance | integer\" />\n                </div>\n            </div>\n\n            <div class=\"column\" if.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:4\">\n                <label>Ignored Throws Leave Threshold/Variance</label>\n\n                <div>\n                    <input type=\"number\" value.bind=\"settings.player.leaveIgnored | integer\" />\n                    <input type=\"number\" value.bind=\"settings.player.leaveIgnoredVariance | integer\" />\n                </div>\n            </div>\n\n            <div class=\"column\" if.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:16\">\n                <label>Ignored Time Leave Threshold/Variance</label>\n\n                <div>\n                    <input type=\"number\" value.bind=\"settings.player.leaveTimeIgnored | integer\" />\n                    <input type=\"number\" value.bind=\"settings.player.leaveTimeIgnoredVariance | integer\" />\n                </div>\n            </div>\n\n            <div class=\"column\" if.bind=\"settings.player.leaveTrigger | flag:settings.player.leaveTrigger:8\">\n                <label>Others Left Leave Threshold</label>\n\n                <div>\n                    <input type=\"number\" value.bind=\"settings.player.leaveOtherLeaver | integer\" />\n                </div>\n            </div>\n\n            <h2>\n                CPUs\n                <button click.delegate=\"addCPU()\">+ Add CPU</button>\n                <button click.delegate=\"removeCPU()\">- Remove CPU</button>\n            </h2>\n\n            <div repeat.for=\"cpu of settings.computerPlayers\">\n                <div class=\"input\">\n                    <label>Name</label>\n                    <input type=\"text\" value.bind=\"cpu.name\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Tint Color</label>\n                    <input type=\"color\" value.bind=\"cpu.tint\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Portrait</label>\n                    <input type=\"text\" value.bind=\"cpu.portrait\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Throw Delay</label>\n                    <input type=\"number\" value.bind=\"cpu.throwDelay | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Throw Delay Variance</label>\n                    <input type=\"number\" value.bind=\"cpu.throwDelayVariance | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Catch Delay</label>\n                    <input type=\"number\" value.bind=\"cpu.catchDelay | integer\" />\n                </div>\n\n                <div class=\"input\">\n                    <label>Catch Delay Variance</label>\n                    <input type=\"number\" value.bind=\"cpu.catchDelayVariance | integer\" />\n                </div>\n\n\n                <div class=\"input\">\n                    <label>Target Preference</label>\n\n                    <div>\n                        <input repeat.for=\"target of cpu.targetPreference\" type=\"number\" value.bind=\"cpu.targetPreference[$index] | integer\" />\n                    </div>\n                </div>\n\n                <div>Leave Triggers</div>\n                <div class=\"column\">\n                    <label>\n                        <input type=\"checkbox\" checked.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:1\" /> Throws Elapsed\n                    </label>\n                    <label>\n                        <input type=\"checkbox\" checked.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:2\" /> Time Elapsed\n                    </label>\n                    <label>\n                        <input type=\"checkbox\" checked.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:4\" /> Throws Ignored\n                    </label>\n                    <label>\n                        <input type=\"checkbox\" checked.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:16\" /> Time Ignored\n                    </label>\n                    <label>\n                        <input type=\"checkbox\" checked.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:8\" /> Other Players Leaving\n                    </label>\n                </div>\n\n                <div class=\"column\" if.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:1\">\n                    <label>Throws Elapsed Leave Threshold/Variance/Chance</label>\n\n                    <div>\n                        <input type=\"number\" value.bind=\"cpu.leaveTurn | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveTurnVariance | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveTurnChance | integer\" />\n                    </div>\n                </div>\n\n                <div class=\"column\" if.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:2\">\n                    <label>Time Elapsed Leave Threshold/Variance/Chance</label>\n\n                    <div>\n                        <input type=\"number\" value.bind=\"cpu.leaveTime | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveTimeVariance | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveTimeChance | integer\" />\n                    </div>\n                </div>\n\n                <div class=\"column\" if.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:4\">\n                    <label>Ignored Throws Leave Threshold/Variance/Chance</label>\n\n                    <div>\n                        <input type=\"number\" value.bind=\"cpu.leaveIgnored | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveIgnoredVariance | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveIgnoredChance | integer\" />\n                    </div>\n                </div>\n\n                <div class=\"column\" if.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:16\">\n                    <label>Ignored Time Leave Threshold/Variance/Chance</label>\n\n                    <div>\n                        <input type=\"number\" value.bind=\"cpu.leaveTimeIgnored | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveTimeIgnoredVariance | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveTimeIgnoredChance | integer\" />\n                    </div>\n                </div>\n\n                <div class=\"column\" if.bind=\"cpu.leaveTrigger | flag:cpu.leaveTrigger:8\">\n                    <label>Others Left Leave Threshold/Chance</label>\n\n                    <div>\n                        <input type=\"number\" value.bind=\"cpu.leaveOtherLeaver | integer\" />\n                        <input type=\"number\" value.bind=\"cpu.leaveOtherLeaverChance | integer\" />\n                    </div>\n                </div>\n\n                <hr />\n            </div>\n\n            <h2>Gameplay</h2>\n\n            <div class=\"input\">\n                <label>Throw Count</label>\n                <input type=\"number\" value.bind=\"settings.throwCount | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Time Limit</label>\n                <input type=\"number\" value.bind=\"settings.timeLimit | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Display Time Limit</label>\n                <input type=\"checkbox\" checked.bind=\"settings.displayTimeLimit\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Time Limit Label</label>\n                <input type=\"text\" value.bind=\"settings.timeLimitText\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Ball Speed</label>\n                <input type=\"number\" value.bind=\"settings.ballSpeed | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Ball Tint Color</label>\n                <input type=\"color\" value.bind=\"settings.ballTint\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Portrait Height</label>\n                <input type=\"number\" value.bind=\"settings.portraitHeight | integer\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Use Schedule</label>\n                <input type=\"checkbox\" checked.bind=\"settings.useSchedule\" />\n            </div>\n\n            <div class=\"input\" if.bind=\"settings.useSchedule\">\n                <label>Schedule</label>\n                <textarea value.bind=\"settings.schedule | integerArray & updateTrigger:'blur'\"></textarea>\n            </div>\n\n            <div class=\"input\">\n                <label>Schedule Honors Throw Count</label>\n                <input type=\"checkbox\" checked.bind=\"settings.scheduleHonorsThrowCount\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Game Over Text</label>\n                <input type=\"text\" value.bind=\"settings.gameOverText\" />\n            </div>\n\n            <div class=\"input\">\n                <label>Game Over Opacity</label>\n                <input type=\"number\" min=\"0\" max=\"1\" step=\"0.1\" value.bind=\"settings.gameOverOpacity | number\" />\n            </div>\n\n            <button click.delegate=\"saveSettings()\">Save</button>\n        </div>\n\n        <div style=\"overflow-y: auto;\">\n            <pre>${settings | json & signal: 'save-settings'}</pre>\n        </div>\n    </div>\n\n    <div>\n        <h1>\n            Code\n            <button id=\"copy\" data-clipboard-target=\"#code\">&#10697; Copy</button>\n            <button click.delegate=\"testGame()\">&#129514; Test</button>\n        </h1>\n        <pre id=\"code\">&lt;iframe id=\"cyberball\" width=\"100%\" height=\"580\" src=\"${url}\"&gt;&lt;/iframe&gt;</pre>\n    </div>\n</template>\n";});;
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -463,7 +548,7 @@ define('resources/value-converters/integer-value-converter',["require", "exports
         function IntegerValueConverter() {
         }
         IntegerValueConverter.prototype.fromView = function (value) {
-            return parseInt(value);
+            return parseInt(value !== null && value !== void 0 ? value : '0');
         };
         return IntegerValueConverter;
     }());
@@ -493,7 +578,7 @@ define('resources/value-converters/number-value-converter',["require", "exports"
         function NumberValueConverter() {
         }
         NumberValueConverter.prototype.fromView = function (value) {
-            return parseFloat(value);
+            return parseFloat(value !== null && value !== void 0 ? value : '0');
         };
         return NumberValueConverter;
     }());
@@ -547,8 +632,6 @@ define('scenes/cyberball',["require", "exports", "enums/leave-trigger", "phaser"
             _this.gameEnded = false;
             _this.throwCount = 0;
             _this.scheduleIndex = 0;
-            _this.lastTime = Date.now();
-            _this.startTime = Date.now();
             _this.settings = settings;
             return _this;
         }
@@ -597,11 +680,10 @@ define('scenes/cyberball',["require", "exports", "enums/leave-trigger", "phaser"
                 image.setScale(this.settings.portraitHeight / image.height);
             }
             if ((this.settings.player.leaveTrigger & leave_trigger_1.LeaveTrigger.Time) === leave_trigger_1.LeaveTrigger.Time) {
-                this.playerSprite.setData('leaveTime', Date.now() + this.getVariantValue(this.settings.player.leaveIgnored, this.settings.player.leaveIgnoredVariance) * 1000);
+                this.playerSprite.setData('leaveTime', Date.now() + this.getVariantValue(this.settings.player.leaveTime, this.settings.player.leaveTimeVariance) * 1000);
             }
             if ((this.settings.player.leaveTrigger & leave_trigger_1.LeaveTrigger.TimeIgnored) === leave_trigger_1.LeaveTrigger.TimeIgnored) {
                 this.playerSprite.setData('leaveTimeIgnored', Date.now() + this.getVariantValue(this.settings.player.leaveTimeIgnored, this.settings.player.leaveTimeIgnoredVariance) * 1000);
-                console.log(Date.now(), this.playerSprite.getData('leaveTimeIgnored') - Date.now());
             }
             var _loop_1 = function (i) {
                 var cpuPosition = this_1.getCPUPosition(i);
@@ -612,7 +694,7 @@ define('scenes/cyberball',["require", "exports", "enums/leave-trigger", "phaser"
                     image = this_1.add.image(portraitPosition.x, portraitPosition.y, 'cpuPortrait' + i);
                     image.setScale(this_1.settings.portraitHeight / image.height);
                 }
-                cpuSprite.flipX = cpuPosition.x > playerPosition.x;
+                cpuSprite.flipX = cpuPosition.x > this_1.playerSprite.x;
                 cpuSprite.setData('settings', this_1.settings.computerPlayers[i]);
                 if (this_1.settings.computerPlayers[i].tint)
                     cpuSprite.setTint(parseInt(this_1.settings.computerPlayers[i].tint.substr(1), 16));
@@ -627,7 +709,7 @@ define('scenes/cyberball',["require", "exports", "enums/leave-trigger", "phaser"
                     }
                 });
                 if ((this_1.settings.computerPlayers[i].leaveTrigger & leave_trigger_1.LeaveTrigger.Time) === leave_trigger_1.LeaveTrigger.Time) {
-                    cpuSprite.setData('leaveTime', Date.now() + this_1.getVariantValue(this_1.settings.computerPlayers[i].leaveIgnored, this_1.settings.computerPlayers[i].leaveIgnoredVariance) * 1000);
+                    cpuSprite.setData('leaveTime', Date.now() + this_1.getVariantValue(this_1.settings.computerPlayers[i].leaveTime, this_1.settings.computerPlayers[i].leaveTimeVariance) * 1000);
                 }
                 if ((this_1.settings.computerPlayers[i].leaveTrigger & leave_trigger_1.LeaveTrigger.TimeIgnored) === leave_trigger_1.LeaveTrigger.TimeIgnored) {
                     cpuSprite.setData('leaveTimeIgnored', Date.now() + this_1.getVariantValue(this_1.settings.computerPlayers[i].leaveTimeIgnored, this_1.settings.computerPlayers[i].leaveTimeIgnoredVariance) * 1000);
@@ -646,9 +728,17 @@ define('scenes/cyberball',["require", "exports", "enums/leave-trigger", "phaser"
                 if (!_this.ballHeld && receiver === _this.throwTarget)
                     _this.catchBall(receiver);
             });
+            this.startTime = Date.now();
+            this.lastTime = this.startTime;
+            if (this.settings.timeLimit > 0 && this.settings.displayTimeLimit) {
+                this.timeLimitText = this.add.text(this.sys.canvas.width - 10, 10, this.getTimeString(), textStyle);
+                this.timeLimitText.setOrigin(1, 0);
+            }
         };
         CyberballScene.prototype.update = function () {
             var _this = this;
+            if (this.gameEnded)
+                return;
             if (this.playerHasBall) {
                 this.playerSprite.play('active');
                 this.playerSprite.flipX = this.input.x < this.playerSprite.x;
@@ -690,6 +780,12 @@ define('scenes/cyberball',["require", "exports", "enums/leave-trigger", "phaser"
                     _this.leaveGame(cpu, 'time ignored');
                 }
             });
+            if (this.settings.timeLimit > 0 && this.settings.displayTimeLimit)
+                this.timeLimitText.setText(this.getTimeString());
+            if (this.settings.timeLimit > 0 && Date.now() - this.startTime > this.settings.timeLimit) {
+                this.postEvent('global-time-limit');
+                this.gameOver();
+            }
         };
         CyberballScene.prototype.gameOver = function () {
             if (this.gameEnded)
@@ -770,6 +866,7 @@ define('scenes/cyberball',["require", "exports", "enums/leave-trigger", "phaser"
             if ((this.settings.useSchedule && this.scheduleIndex === this.settings.schedule.length) ||
                 (this.settings.useSchedule && this.settings.scheduleHonorsThrowCount && this.throwCount >= this.settings.throwCount) ||
                 (!this.settings.useSchedule && this.throwCount >= this.settings.throwCount)) {
+                this.postEvent('throw-count-met');
                 this.gameOver();
                 return;
             }
@@ -895,6 +992,11 @@ define('scenes/cyberball',["require", "exports", "enums/leave-trigger", "phaser"
         };
         CyberballScene.prototype.checkChance = function (chance) {
             return phaser_1.default.Math.RND.between(0, 100) <= chance;
+        };
+        CyberballScene.prototype.getTimeString = function () {
+            var timeRemaining = this.settings.timeLimit - (Date.now() - this.startTime);
+            var time = new Date(timeRemaining < 0 ? 0 : timeRemaining);
+            return "".concat(this.settings.timeLimitText, " ").concat(time.getUTCMinutes(), ":").concat(time.getUTCSeconds() < 10 ? '0' : '').concat(time.getUTCSeconds());
         };
         CyberballScene.prototype.postEvent = function (type, data) {
             if (data === void 0) { data = {}; }

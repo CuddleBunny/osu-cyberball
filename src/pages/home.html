@@ -261,6 +261,21 @@
             </div>
 
             <div class="input">
+                <label>Time Limit</label>
+                <input type="number" value.bind="settings.timeLimit | integer" />
+            </div>
+
+            <div class="input">
+                <label>Display Time Limit</label>
+                <input type="checkbox" checked.bind="settings.displayTimeLimit" />
+            </div>
+
+            <div class="input">
+                <label>Time Limit Label</label>
+                <input type="text" value.bind="settings.timeLimitText" />
+            </div>
+
+            <div class="input">
                 <label>Ball Speed</label>
                 <input type="number" value.bind="settings.ballSpeed | integer" />
             </div>
