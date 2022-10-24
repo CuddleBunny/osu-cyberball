@@ -19,9 +19,16 @@ export class CPUModel extends PlayerModel {
     boredomBanterThreshold?: number;
     boredomBanter?: BanterModel;
 
+    leaveTurnChance?: number = 100;
+    leaveTimeChance?: number = 100;
+    leaveIgnoredChance?: number = 100;
+    leaveTimeIgnoredChance?: number = 100;
+    leaveOtherLeaverChance?: number = 50;
+
     constructor(init?: Partial<CPUModel>) {
         super();
 
-        Object.assign(this, init);
+        if(init)
+            Object.assign(this, init);
     }
 }

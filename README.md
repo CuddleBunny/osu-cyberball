@@ -24,6 +24,7 @@ JavaScript:
 
 ```
 var throwLog = [];
+var leaveButtonText = 'Leave Game';
 
 Qualtrics.SurveyEngine.addOnload(function()
 {
@@ -39,7 +40,29 @@ Qualtrics.SurveyEngine.addOnReady(function()
 	window.addEventListener('message', function(e) {
 		switch(e.data.type) {
 			case 'throw':
+			case 'leave':
 				throwLog.push(e.data);
+				break;
+			case 'player-may-leave':
+				throwLog.push(e.data);
+
+				jQuery('#NextButton').clone()
+					.attr('disabled', false)
+					.attr('title', leaveButtonText)
+					.attr('value', leaveButtonText)
+					.attr('aria-label', leaveButtonText)
+					.attr('style', 'margin-right: 10px')
+					.prependTo('#Buttons')
+					.one('click', function() {
+						throwLog.push({
+							type: 'player-left'
+						});
+
+						Qualtrics.SurveyEngine.setEmbeddedData('GameLog', JSON.stringify(throwLog));
+
+						survey.clickNextButton();
+					});
+
 				break;
 			case 'game-end':
 				Qualtrics.SurveyEngine.setEmbeddedData('GameLog', JSON.stringify(throwLog));
@@ -47,7 +70,7 @@ Qualtrics.SurveyEngine.addOnReady(function()
 				survey.showNextButton();
 
 				// Auto-advance?
-				//document.getElementById('NextButton').click();
+				//survey.clickNextButton();
 				break;
 			default:
 		}

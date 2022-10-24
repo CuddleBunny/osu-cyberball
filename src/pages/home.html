@@ -2,6 +2,7 @@
     <require from="resources/value-converters/json-value-converter"></require>
     <require from="resources/value-converters/integer-value-converter"></require>
     <require from="resources/value-converters/integer-array-value-converter"></require>
+    <require from="resources/value-converters/flag-value-converter"></require>
 
     <style>
         body {
@@ -28,6 +29,11 @@
             flex: 1 1 100%;
             min-width: 0;
             width: auto;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
         }
 
         .input > div {
@@ -59,6 +65,69 @@
             <div class="input">
                 <label>Portrait</label>
                 <input type="text" value.bind="settings.player.portrait" />
+            </div>
+
+            <div>Leave Triggers</div>
+            <div class="column">
+                <label>
+                    <input type="checkbox" checked.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:1" /> Throws Elapsed
+                </label>
+                <label>
+                    <input type="checkbox" checked.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:2" /> Time Elapsed
+                </label>
+                <label>
+                    <input type="checkbox" checked.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:4" /> Throws Ignored
+                </label>
+                <label>
+                    <input type="checkbox" checked.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:16" /> Time Ignored
+                </label>
+                <label>
+                    <input type="checkbox" checked.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:8" /> Other Players Leaving
+                </label>
+            </div>
+
+            <div class="column" if.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:1">
+                <label>Throws Elapsed Leave Threshold/Variance</label>
+
+                <div>
+                    <input type="number" value.bind="settings.player.leaveTurn | integer" />
+                    <input type="number" value.bind="settings.player.leaveTurnVariance | integer" />
+                </div>
+            </div>
+
+            <div class="column" if.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:2">
+                <label>Time Elapsed Leave Threshold/Variance</label>
+
+                <div>
+                    <input type="number" value.bind="settings.player.leaveTime | integer" />
+                    <input type="number" value.bind="settings.player.leaveTimeVariance | integer" />
+                </div>
+            </div>
+
+            <div class="column" if.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:4">
+                <label>Ignored Throws Leave Threshold/Variance</label>
+
+                <div>
+                    <input type="number" value.bind="settings.player.leaveIgnored | integer" />
+                    <input type="number" value.bind="settings.player.leaveIgnoredVariance | integer" />
+                </div>
+            </div>
+
+            <div class="column" if.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:16">
+                <label>Ignored Time Leave Threshold/Variance</label>
+
+                <div>
+                    <input type="number" value.bind="settings.player.leaveTimeIgnored | integer" />
+                    <input type="number" value.bind="settings.player.leaveTimeIgnoredVariance | integer" />
+                </div>
+            </div>
+
+            <div class="column" if.bind="settings.player.leaveTrigger | flag:settings.player.leaveTrigger:8">
+                <label>Others Left Leave Threshold</label>
+
+                <div>
+                    <input type="number" value.bind="settings.player.leaveOtherLeaver | integer" />
+                </div>
             </div>
 
             <h2>
@@ -109,6 +178,74 @@
 
                     <div>
                         <input repeat.for="target of cpu.targetPreference" type="number" value.bind="cpu.targetPreference[$index] | integer" />
+                    </div>
+                </div>
+
+                <div>Leave Triggers</div>
+                <div class="column">
+                    <label>
+                        <input type="checkbox" checked.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:1" /> Throws Elapsed
+                    </label>
+                    <label>
+                        <input type="checkbox" checked.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:2" /> Time Elapsed
+                    </label>
+                    <label>
+                        <input type="checkbox" checked.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:4" /> Throws Ignored
+                    </label>
+                    <label>
+                        <input type="checkbox" checked.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:16" /> Time Ignored
+                    </label>
+                    <label>
+                        <input type="checkbox" checked.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:8" /> Other Players Leaving
+                    </label>
+                </div>
+
+                <div class="column" if.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:1">
+                    <label>Throws Elapsed Leave Threshold/Variance/Chance</label>
+
+                    <div>
+                        <input type="number" value.bind="cpu.leaveTurn | integer" />
+                        <input type="number" value.bind="cpu.leaveTurnVariance | integer" />
+                        <input type="number" value.bind="cpu.leaveTurnChance | integer" />
+                    </div>
+                </div>
+
+                <div class="column" if.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:2">
+                    <label>Time Elapsed Leave Threshold/Variance/Chance</label>
+
+                    <div>
+                        <input type="number" value.bind="cpu.leaveTime | integer" />
+                        <input type="number" value.bind="cpu.leaveTimeVariance | integer" />
+                        <input type="number" value.bind="cpu.leaveTimeChance | integer" />
+                    </div>
+                </div>
+
+                <div class="column" if.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:4">
+                    <label>Ignored Throws Leave Threshold/Variance/Chance</label>
+
+                    <div>
+                        <input type="number" value.bind="cpu.leaveIgnored | integer" />
+                        <input type="number" value.bind="cpu.leaveIgnoredVariance | integer" />
+                        <input type="number" value.bind="cpu.leaveIgnoredChance | integer" />
+                    </div>
+                </div>
+
+                <div class="column" if.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:16">
+                    <label>Ignored Time Leave Threshold/Variance/Chance</label>
+
+                    <div>
+                        <input type="number" value.bind="cpu.leaveTimeIgnored | integer" />
+                        <input type="number" value.bind="cpu.leaveTimeIgnoredVariance | integer" />
+                        <input type="number" value.bind="cpu.leaveTimeIgnoredChance | integer" />
+                    </div>
+                </div>
+
+                <div class="column" if.bind="cpu.leaveTrigger | flag:cpu.leaveTrigger:8">
+                    <label>Others Left Leave Threshold/Chance</label>
+
+                    <div>
+                        <input type="number" value.bind="cpu.leaveOtherLeaver | integer" />
+                        <input type="number" value.bind="cpu.leaveOtherLeaverChance | integer" />
                     </div>
                 </div>
 
