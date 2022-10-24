@@ -480,7 +480,7 @@ export class CyberballScene extends Phaser.Scene {
         });
 
         // If there is only one player left, end the game:
-        if (this.absentPlayers.length >= this.settings.computerPlayers.length) {
+        if (this.settings.endGameWhenAlone && this.absentPlayers.length >= this.settings.computerPlayers.length) {
             this.gameOver();
             return;
         }

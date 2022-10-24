@@ -10,6 +10,7 @@ export class SettingsModel {
     timeLimit: number = 0;
     displayTimeLimit: boolean = false;
     timeLimitText: string = 'Time Limit:';
+    endGameWhenAlone: boolean = true;
     ballSpeed: number = 500;
 
     useSchedule: boolean = false;
