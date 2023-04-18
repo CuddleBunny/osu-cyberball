@@ -53,11 +53,11 @@ export class CyberballScene extends Phaser.Scene {
         this.load.multiatlas('player', `${this.settings.baseUrl}/player.json`, 'assets');
 
         if(this.settings.player.portrait)
-            this.load.image('playerPortrait', 'https://cors-anywhere.herokuapp.com/' + this.settings.player.portrait);
+            this.load.image('playerPortrait', 'https://proxy.cors.sh/' + this.settings.player.portrait);
 
         this.settings.computerPlayers.forEach((cpu, i) => {
             if(cpu.portrait)
-                this.load.image('cpuPortrait' + i, 'https://cors-anywhere.herokuapp.com/' + cpu.portrait);
+                this.load.image('cpuPortrait' + i, 'https://proxy.cors.sh/' + cpu.portrait);
         });
     }
 
@@ -264,7 +264,10 @@ export class CyberballScene extends Phaser.Scene {
 
         // Stop future throws:
         clearTimeout(this.activeTimeout);
-        this.playerGroup.children.each(child => child.removeAllListeners());
+        this.playerGroup.children.iterate(child => {
+            child.removeAllListeners();
+            return true;
+        });
 
         // Draw game over screen:
         this.add.rectangle(this.sys.canvas.width / 2, this.sys.canvas.height / 2, this.sys.canvas.width, this.sys.canvas.height, 0xdddddd, this.settings.gameOverOpacity);
@@ -286,6 +289,8 @@ export class CyberballScene extends Phaser.Scene {
 
         // Wait until the player throws the ball to reset their ignored timer, so they cannot ignore themselves.
         let throwerSettings = thrower.getData('settings');
+
+        // BUG: Leave time does not reset https://github.com/CuddleBunny/osu-cyberball/issues/30
         if((throwerSettings.leaveTrigger & LeaveTrigger.TimeIgnored) === LeaveTrigger.TimeIgnored) {
             receiver.setData('leaveTimeIgnored', Date.now() + this.getVariantValue(throwerSettings.leaveTimeIgnored, throwerSettings.leaveTimeIgnoredVariance) * 1000);
         }
